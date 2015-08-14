@@ -54,7 +54,7 @@ public class ModuleIdleRPG extends Module implements ILua {
 	}
 
 	public void onEnable(File dir) {
-		Data.config.setNotExists("idlerpg-channel", "#shockyidlerpg");
+		Data.config.setNotExists("idlerpg-channel", "#ssss");
 		Data.config.setNotExists("idlerpg-announce", true);
 		Data.config.setNotExists("idlerpg-leaderboards-print", 5);
 		if (!Data.protectedKeys.contains("idlerpg-channel"))

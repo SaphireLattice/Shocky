@@ -71,7 +71,7 @@ public class ModuleRollback extends Module implements IRollback {
 		Command.addCommands(this, cmd = new CmdPastebin());
 		Command.addCommand(this, "pb", cmd);
 		
-		SQL.raw("CREATE TABLE IF NOT EXISTS rollback (channel varchar(50) NOT NULL,users text,type int(1) unsigned NOT NULL,stamp bigint(20) unsigned NOT NULL,text text NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+		SQL.raw("CREATE TABLE IF NOT EXISTS rollback (channel varchar(50) NOT NULL,users text,type int(1) NOT NULL,stamp bigint(20) NOT NULL,text text NOT NULL);");
 	}
 	public void onDisable() {
 		Command.removeCommands(cmd);

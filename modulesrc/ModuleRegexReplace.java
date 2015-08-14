@@ -30,7 +30,7 @@ import pl.shockah.shocky.lines.LineWithUsers;
 
 public class ModuleRegexReplace extends Module {
 
-	public static final Pattern sedPattern = Pattern.compile("^([sm])/(.*?(?<!\\\\))/(?:(.*?(?<!\\\\))/)?([a-z]*)");
+	public static final Pattern sedPattern = Pattern.compile("^([sm])/([^/]+)/([^/]+)/?([a-z]*)");
 	public static String[] groupColors = new String[] { Colors.BLUE + ",02",Colors.RED + ",05", Colors.GREEN + ",03", Colors.MAGENTA + ",06",Colors.CYAN + ",10" };
 
 	@Override

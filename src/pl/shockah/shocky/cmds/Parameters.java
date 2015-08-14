@@ -109,7 +109,7 @@ public class Parameters {
 		return channel.isOp(sender);
 	}
 	public void checkOp() {
-		if (isOp())
+		if (isOp() || isController())
 			return;
 		throw new AuthorizationException("Must have +o in channel to use this command.");
 	}

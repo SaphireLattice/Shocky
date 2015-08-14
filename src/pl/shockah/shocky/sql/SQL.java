@@ -23,7 +23,8 @@ public class SQL {
 	
 	public static void init() {
 		try {
-            Class.forName("com.mysql.jdbc.Driver").newInstance();
+            //Class.forName("com.mysql.jdbc.Driver").newInstance();
+			Class.forName("org.sqlite.JDBC").newInstance();
             Class.forName("pl.shockah.shocky.sql.Criterion");
             Class.forName("pl.shockah.shocky.sql.CriterionNumber");
             Class.forName("pl.shockah.shocky.sql.CriterionString");
@@ -49,14 +50,18 @@ public class SQL {
 						iter.remove();
 					}
 				}
-				conn = DriverManager.getConnection(String.format("jdbc:mysql://%s/%s?user=%s&password=%s&useUnicode=true&characterEncoding=utf-8",
+				conn = DriverManager.getConnection("jdbc:sqlite:shocky.db");/*String.format("jdbc:mysql://%s/%s?user=%s&password=%s&useUnicode=true&characterEncoding=utf-8",
 						Data.config.getString("main-sqlhost"),
 						Data.config.getString("main-sqldb"),
 						Data.config.getString("main-sqluser"),
-						Data.config.getString("main-sqlpass")));
+						Data.config.getString("main-sqlpass")));*/
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+			try {
+			conn.close();
+			} catch(SQLException ei)
+			{}
 			conn = null;
 		}
 		return conn;
@@ -65,8 +70,12 @@ public class SQL {
 	public static ResultSet executeQuery(String query) {
 		Statement s = null;
 		try {
-			s = getSQLConnection().createStatement();
-			return s.executeQuery(query);
+			Connection tmpc= getSQLConnection();
+			s = tmpc.createStatement();
+			ResultSet ret = s.executeQuery(query);
+			s.close();
+			tmpc.close();
+			return ret;
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -76,31 +85,27 @@ public class SQL {
 	public static void execute(String query) {
 		Statement s = null;
 		try {
-			s = getSQLConnection().createStatement();
+			Connection tmpc= getSQLConnection();
+			s = tmpc.createStatement();
 			s.execute(query);
+			s.close();
+			tmpc.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} finally {
-			try {
-				s.close();
-			} catch (SQLException e) {
-			}
 		}
 	}
 	
 	public static int updateResultSet(String query) {
 		Statement s = null;
 		try {
-			s = getSQLConnection().createStatement();
-			return s.executeUpdate(query);
+			Connection tmpc= getSQLConnection();
+			s = tmpc.createStatement();
+			int tmp = s.executeUpdate(query);
+			s.close();
+			tmpc.close();
+			return tmp;
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} finally {
-			try {
-				if (s != null)
-					s.close();
-			} catch (SQLException e) {
-			}
 		}
 		return 0;
 	}
@@ -108,16 +113,14 @@ public class SQL {
 	public static int insert(QueryInsert query) {
 		PreparedStatement s = null;
 		try {
-			s = query.getSQLQuery(getSQLConnection());
-			return s.executeUpdate();
+			Connection tmpc= getSQLConnection();
+			s = query.getSQLQuery(tmpc);
+			int tmp = s.executeUpdate();
+			s.close();
+			tmpc.close();
+			return tmp;
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} finally {
-			try {
-				if (s != null)
-					s.close();
-			} catch (SQLException e) {
-			}
 		}
 		return 0;
 	}

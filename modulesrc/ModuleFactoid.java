@@ -17,6 +17,8 @@ import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.NoticeEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
 
+import java.sql.Connection;
+
 import pl.shockah.*;
 import pl.shockah.shocky.*;
 import pl.shockah.shocky.Utils;
@@ -71,9 +73,9 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		Data.protectedKeys.add("php-url");
 		Data.protectedKeys.add("python-url");
 
-		SQL.raw("CREATE TABLE IF NOT EXISTS "
-				+ SQL.getTable("factoid")
-				+ " (id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,channel varchar(50) DEFAULT NULL,factoid text NOT NULL,author text NOT NULL,rawtext text NOT NULL,stamp int(10) unsigned NOT NULL,locked int(1) unsigned NOT NULL DEFAULT '0',forgotten int(1) unsigned NOT NULL DEFAULT '0',PRIMARY KEY (id),INDEX channel (channel)) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+		SQL.raw("CREATE TABLE IF NOT EXISTS factoid (id INTEGER PRIMARY KEY AUTOINCREMENT ,channel varchar(50) DEFAULT NULL,factoid text NOT NULL,author text NOT NULL,rawtext text NOT NULL,stamp unsigned int(10) NOT NULL,locked unsigned int(1) NOT NULL DEFAULT '0',forgotten unsigned int(1) NOT NULL DEFAULT '0');");
+				//+ SQL.getTable("factoid"
+				//+ " (id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,channel varchar(50) DEFAULT NULL,factoid text NOT NULL,author text NOT NULL,rawtext text NOT NULL,stamp int(10) unsigned NOT NULL,locked int(1) unsigned NOT NULL DEFAULT '0',forgotten int(1) unsigned NOT NULL DEFAULT '0',PRIMARY KEY (id),INDEX channel (channel)) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
 
 		Command.addCommands(this, cmdR = new CmdRemember(), cmdF = new CmdForget(), cmdU = new CmdUnforget(), cmdFCMD = new CmdFactoidCmd(), cmdManage = new CmdManage());
 
@@ -807,6 +809,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		return array;
 	}
 	
+	private static Connection tmpc = SQL.getSQLConnection();
 	private static PreparedStatement prepareStatement(Cache cache, boolean hasChannel, boolean hasForget) throws SQLException {
 		String key;
 		if (hasForget) {
@@ -821,23 +824,30 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 				key = getFactoidForgetHash;
 		}
 		PreparedStatement p = null;
-		if (cache != null && cache.containsKey(sqlHash, key)) {
-			Object obj = cache.get(sqlHash, key);
-			if ((obj instanceof PreparedStatement)&& !((PreparedStatement) obj).isClosed())
-				p = (PreparedStatement) obj;
-		}
+		//if (cache != null && cache.containsKey(sqlHash, key)) {
+		//	Object obj = cache.get(sqlHash, key);
+		//	if ((obj instanceof PreparedStatement)&& !((PreparedStatement) obj).isClosed())
+		//		p = (PreparedStatement) obj;
+		//}
 
 		if (p == null) {
+			try {
+				tmpc.close();
+				tmpc = null;
+			} catch(SQLException e) {
+				e.printStackTrace();
+			}
+			tmpc = SQL.getSQLConnection();
 			if (hasForget) {
 				if (hasChannel)
-					p = SQL.getSQLConnection().prepareStatement("SELECT * FROM factoid WHERE ((channel IS NULL OR channel=?) AND factoid=? AND forgotten=?) ORDER BY channel DESC, stamp DESC LIMIT ?");
+					p = tmpc.prepareStatement("SELECT * FROM factoid WHERE ((channel IS NULL OR channel=?) AND factoid=? AND forgotten=?) ORDER BY channel DESC, stamp DESC LIMIT ?");
 				else
-					p = SQL.getSQLConnection().prepareStatement("SELECT * FROM factoid WHERE (channel IS NULL AND factoid=? AND forgotten=?) ORDER BY stamp DESC LIMIT ?");
+					p = tmpc.prepareStatement("SELECT * FROM factoid WHERE (channel IS NULL AND factoid=? AND forgotten=?) ORDER BY stamp DESC LIMIT ?");
 			} else {
 				if (hasChannel)
-					p = SQL.getSQLConnection().prepareStatement("SELECT * FROM factoid WHERE ((channel IS NULL OR channel=?) AND factoid=?) ORDER BY channel DESC, stamp DESC LIMIT ?");
+					p = tmpc.prepareStatement("SELECT * FROM factoid WHERE ((channel IS NULL OR channel=?) AND factoid=?) ORDER BY channel DESC, stamp DESC LIMIT ?");
 				else
-					p = SQL.getSQLConnection().prepareStatement("SELECT * FROM factoid WHERE (channel IS NULL AND factoid=?) ORDER BY stamp DESC LIMIT ?");
+					p = tmpc.prepareStatement("SELECT * FROM factoid WHERE (channel IS NULL AND factoid=?) ORDER BY stamp DESC LIMIT ?");
 			}
 			if (cache != null && !cache.containsKey(sqlHash, key))
 				cache.put(sqlHash, key, p);
@@ -866,6 +876,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 			f = Factoid.fromResultSet(j);
 			if (cache == null)
 				p.close();
+			tmpc.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return null;
@@ -896,6 +907,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 			f = Factoid.fromResultSet(j);
 			if (cache == null)
 				p.close();
+			tmpc.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return null;
@@ -925,6 +937,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 			f = Factoid.arrayFromResultSet(j);
 			if (cache == null)
 				p.close();
+			tmpc.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return null;
@@ -955,6 +968,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 			f = Factoid.arrayFromResultSet(j);
 			if (cache == null)
 				p.close();
+			tmpc.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return null;

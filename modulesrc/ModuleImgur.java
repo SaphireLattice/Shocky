@@ -34,7 +34,7 @@ public class ModuleImgur extends Module implements IAcceptURLs {
 	@Override
 	public void onEnable(File dir) {
 		Data.config.setNotExists("imgur-otherbot",false);
-		Data.config.setNotExists("imgur-clientid","");
+		Data.config.setNotExists("imgur-clientid","337214e57ece93d");
 		Data.protectedKeys.add("imgur-clientid");
 	}
 
