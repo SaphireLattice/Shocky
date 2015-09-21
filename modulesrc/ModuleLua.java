@@ -10,8 +10,6 @@ import org.pircbotx.Channel;
 import org.pircbotx.PircBotX;
 import org.pircbotx.User;
 
-import com.sun.script.javascript.RhinoScriptEngine;
-
 import pl.shockah.Delegate;
 import pl.shockah.Helper;
 import pl.shockah.ZeroInputStream;
@@ -132,7 +130,7 @@ public class ModuleLua extends ScriptModule implements ResourceFinder {
 			Class.forName("org.luaj.vm2.lib.LuaState");
 			Class.forName("ModuleLua$CmdFunction");
 			Class.forName("pl.shockah.Delegate$Instance");
-			new RhinoScriptEngine().eval("0");
+			//new RhinoScriptEngine().eval("0");
 			if (!scripts.exists())
 				scripts.mkdirs();
 			if (binary.exists()) {

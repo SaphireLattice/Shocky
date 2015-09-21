@@ -3,6 +3,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
@@ -33,13 +37,20 @@ import pl.shockah.shocky.Shocky;
 import pl.shockah.shocky.Utils;
 import pl.shockah.shocky.cmds.Command;
 import pl.shockah.shocky.interfaces.ILua;
+import pl.shockah.shocky.sql.ConnStatResultSet;
+import pl.shockah.shocky.sql.CriterionNumber;
+import pl.shockah.shocky.sql.Criterion.Operation;
+import pl.shockah.shocky.sql.CriterionString;
+import pl.shockah.shocky.sql.QueryInsert;
+import pl.shockah.shocky.sql.QuerySelect;
+import pl.shockah.shocky.sql.QueryUpdate;
+import pl.shockah.shocky.sql.SQL;
+import pl.shockah.shocky.sql.Wildcard;
 
-public class ModuleIdleRPG extends Module implements ILua {
+@SuppressWarnings("unused")
+public class ModuleIdleRPG extends Module /*implements ILua*/ {
 	public static DecimalFormat formatXP = new DecimalFormat("###,###", new DecimalFormatSymbols(Locale.ENGLISH));
 	public static DecimalFormat formatXPPercent = new DecimalFormat("###,###.#", new DecimalFormatSymbols(Locale.ENGLISH));
-
-	//private Player.LinkedList players = new Player.LinkedList();
-	private Map<String,Player> players = Collections.synchronizedMap(new TreeMap<String,Player>(new ComparatorIgnoreCase()));
 
 	public String name() {
 		return "idlerpg";
@@ -49,105 +60,113 @@ public class ModuleIdleRPG extends Module implements ILua {
 		return true;
 	}
 
-	public void onDisable() {
-		players.clear();
-	}
-
 	public void onEnable(File dir) {
 		Data.config.setNotExists("idlerpg-channel", "#ssss");
 		Data.config.setNotExists("idlerpg-announce", true);
 		Data.config.setNotExists("idlerpg-leaderboards-print", 5);
 		if (!Data.protectedKeys.contains("idlerpg-channel"))
-			Data.protectedKeys.addAll(Arrays.asList(new String[] {
-					"idlerpg-channel", "idlerpg-announce",
-					"idlerpg-leaderboards-print" }));
+			Data.protectedKeys.addAll(Arrays.asList(new String[] {"idlerpg-channel", "idlerpg-announce", "idlerpg-leaderboards-print" }));
 		try {
-			File f = new File(dir, "idlerpg.json");
-			if (f.exists()) {
-				BufferedReader br = new BufferedReader(new FileReader(f));
-				StringBuilder sb = new StringBuilder();
-				String line = br.readLine();
-
-				while (line != null) {
-					sb.append(line);
-					sb.append('\n');
-					line = br.readLine();
-				}
-				readJSON(new JSONObject(sb.toString()));
-				br.close();
-			}
+			SQL.raw("CREATE TABLE IF NOT EXISTS idlerpg (name text NOT NULL, level INTEGER NOT NULL, xp BIG INTEGER(20), lastupdate BIG INTEGER(20) NOT NULL);");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public void onDataSave(File dir) {
-		File file = new File(dir, "idlerpg.json");
-		File temp = null;
-		try {
-			try {
-				temp = File.createTempFile("shocky", ".tmp");
-			} catch (IOException e1) {
-				throw new RuntimeException(e1);
+	private Player GetPlayerFromSQL(String identify) {
+		Player ret = null;
+		ConnStatResultSet csrs = null;
+		ResultSet rs = null;
+		try{
+			QuerySelect q = new QuerySelect(SQL.getTable("idlerpg"));
+			q.addCriterions(new CriterionString("name",Operation.Equals,identify));
+			q.setLimitCount(1);
+			csrs = SQL.select(q,false);
+			rs = csrs.rs;
+			if (rs != null){
+				if (rs.next()) {
+					ret = new Player(identify);
+					ret.level = rs.getInt("level");
+					ret.xp = rs.getInt("xp");
+					ret.lastUpdate = rs.getLong("lastupdate");
+				}
 			}
-			System.out.printf("File: %s Temp: %s", file.getAbsolutePath(), temp.getAbsolutePath()).println();
-			
-			PrintWriter pw = new PrintWriter(temp);
-			pw.write(writeJSON().toString());
-			pw.close();
-			
-			if (file.exists())
-				file.delete();
-			temp.renameTo(file);
-		} catch (Exception e) {
+		}
+		catch(Exception e)
+		{
 			e.printStackTrace();
 		} finally {
-			if (temp != null && temp.exists())
-				temp.delete();
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+				csrs.c.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
+		return ret;
 	}
-
-	public void readJSON(JSONObject json) {
-		try {
-			if (json.has("players")) {
-				JSONArray jPlayers = json.getJSONArray("players");
-				for (int i = 0; i < jPlayers.length(); i++) {
-					JSONObject jPlayer = jPlayers.getJSONObject(i);
-					Player player = new Player(jPlayer.getString("name"));
-					player.level = jPlayer.getInt("level");
-					player.xp = jPlayer.getInt("xp");
-					player.lastUpdate = jPlayer.getInt("lastUpdate");
-
-					//Player player2 = this.players.findByName(player.name);
-					Player player2 = this.players.get(player.name);
-					if (player2 != null && player2.level >= player.level)
-						continue;
-					//this.players.add(player);
-					this.players.put(player.name,player);
+	
+	public static synchronized void UpdatePlayerToSQL(String identify, Player player) {
+		ConnStatResultSet csrs = null;
+		ResultSet rs = null;
+		if(player==null)
+			return;
+		try{
+			QuerySelect q = new QuerySelect(SQL.getTable("idlerpg"));
+			q.addCriterions(new CriterionString("name", Operation.Equals, identify));
+			q.setLimitCount(1);
+			csrs = SQL.select(q, false);
+			rs = csrs.rs;
+			if (rs != null){
+				if (rs.next()) {
+					csrs.rs.close();
+					csrs.c.close();
+					QueryUpdate qu = new QueryUpdate(SQL.getTable("idlerpg"));
+					qu.addCriterions(new CriterionString("name", CriterionNumber.Operation.Equals, identify));
+					qu.set("level", player.level);
+					qu.set("xp", player.xp);
+					qu.set("lastupdate", player.lastUpdate);
+					SQL.update(qu);
+				}
+				else {
+					csrs.rs.close();
+					csrs.c.close();
+					QueryInsert qi = new QueryInsert(SQL.getTable("idlerpg"));
+					qi.add("name",Wildcard.blank);
+					qi.add("level",Wildcard.blank);
+					qi.add("xp",Wildcard.blank);
+					qi.add("lastupdate",Wildcard.blank);
+					
+					Connection tmpc = SQL.getSQLConnection();
+					PreparedStatement p = tmpc.prepareStatement(qi.getSQLQuery());
+					synchronized (p) {
+						p.setString(1, identify);
+						p.setInt(2, player.level);
+						p.setInt(3, player.xp);
+						p.setLong(4, player.lastUpdate);
+						p.execute();
+					}
+					p.close();
+					tmpc.close();
 				}
 			}
-		} catch (Exception localException) {
-		}
-	}
-
-	public JSONObject writeJSON() {
-		JSONObject json = new JSONObject();
-		try {
-			JSONArray jPlayers = new JSONArray();
-			for (Player player : this.players.values()) {
-				JSONObject jPlayer = new JSONObject();
-				jPlayer.put("name", player.name);
-				jPlayer.put("level", player.level);
-				jPlayer.put("xp", player.xp);
-				jPlayer.put("lastUpdate", player.lastUpdate);
-				jPlayers.put(jPlayer);
+		} catch(Exception e)
+		{
+			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+				if (csrs.c != null && !csrs.c.isClosed())
+					csrs.c.close();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-			json.put("players", jPlayers);
-		} catch (Exception localException) {
 		}
-		return json;
+		return;
 	}
-
+	
 	public static void send(MessageEvent<ShockyBot> ev, String message) {
 		Command.EType type = Command.EType.Channel;
 		String allowedChannel = Data.config.getString("idlerpg-channel");
@@ -203,17 +222,19 @@ public class ModuleIdleRPG extends Module implements ILua {
 			send(ev, ev.getUser().getNick()+": You need to be identified to NickServ to play IdleRPG.");
 			return;
 		}
+		
 		Session session = new Session(ev.getBot(), ev.getChannel(), ev.getUser(), identify);
-		session.player = this.players.get(identify);
-
+		//session.player = this.players.get(identify);
+		session.player = GetPlayerFromSQL(identify);
+		
 		msg = msg.substring(1).trim();
 		String[] spl = msg.isEmpty() ? new String[0] : msg.split(" ");
 		if ((spl.length == 0)
 				|| ((spl.length <= 2) && ("status".startsWith(spl[0]
-						.toLowerCase())))) {
+						.toLowerCase()) )) ) {
 			Player check = session.player;
 			if (spl.length == 2)
-				check = this.players.get(spl[1]);
+				check = GetPlayerFromSQL(spl[1]);
 
 			if (check == null) {
 				if (spl.length == 2) {
@@ -221,7 +242,7 @@ public class ModuleIdleRPG extends Module implements ILua {
 							+ "' doesn't exist.");
 					return;
 				}
-				this.players.put(identify,new Player(identify));
+				UpdatePlayerToSQL(identify, new Player(identify));
 				send(ev, ev.getUser().getNick() + ": Welcome to the IdleRPG, "
 						+ identify + '!');
 				return;
@@ -231,10 +252,13 @@ public class ModuleIdleRPG extends Module implements ILua {
 			send(ev, check.printStatus(session, true, true));
 		} else if ((spl.length == 1)
 				&& ("leaderboards".startsWith(spl[0].toLowerCase()))) {
-			for (Player p : this.players.values())
-				p.update(session);
+			//TODO: write leaderboard SQL iteration
+			//for (Player p : this.players.values())
+			//	p.update(session);
 
+			/*
 			ArrayList<Player> list = new ArrayList<Player>(this.players.values());
+			
 			Collections.sort(list, new ComparatorLevel(false));
 
 			StringBuilder print = new StringBuilder();
@@ -260,7 +284,7 @@ public class ModuleIdleRPG extends Module implements ILua {
 					print.append(" | Full leaderboards: ").append(url);
 			}
 
-			send(ev, Utils.mungeAllNicks(ev.getChannel(), 0, print, ev.getUser()));
+			send(ev, Utils.mungeAllNicks(ev.getChannel(), 0, print, ev.getUser()));/**/
 		}
 	}
 
@@ -305,7 +329,7 @@ public class ModuleIdleRPG extends Module implements ILua {
 			this.xp = 0;
 			this.lastUpdate = (System.currentTimeMillis() / 1000L);
 		}
-
+		
 		public void update(Session session) {
 			long time = System.currentTimeMillis() / 1000L;
 			long diff = time - this.lastUpdate;
@@ -317,6 +341,7 @@ public class ModuleIdleRPG extends Module implements ILua {
 					&& (this.xp >= xp2l)) {
 				this.xp = 0;
 				this.level += 1;
+				UpdatePlayerToSQL(session.identify , this);
 			}
 
 			if (this.xp > xp2l)
@@ -396,7 +421,7 @@ public class ModuleIdleRPG extends Module implements ILua {
 		}
 	}
 	
-	public LuaValue getPlayerTable(String name) {
+	/*public LuaValue getPlayerTable(String name) {
 		if (!players.containsKey(name))
 			return LuaValue.NIL;
 		Player player = players.get(name);
@@ -452,5 +477,5 @@ public class ModuleIdleRPG extends Module implements ILua {
 		t.rawset("status", new StatusFunction());
 		t.rawset("leaders", new LeaderboardFunction());
 		env.set("idlerpg", t);
-	}
+	}*/
 }

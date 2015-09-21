@@ -1,5 +1,6 @@
 import java.io.File;
 import java.net.URLEncoder;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -25,6 +26,7 @@ import pl.shockah.shocky.interfaces.ILinePredicate;
 import pl.shockah.shocky.lines.*;
 import pl.shockah.shocky.sql.*;
 import pl.shockah.shocky.sql.Criterion.Operation;
+
 
 public class ModuleRollback extends Module implements IRollback {
 	private static final Pattern durationPattern = Pattern.compile("([0-9]+)([smhd])", Pattern.CASE_INSENSITIVE);
@@ -71,7 +73,7 @@ public class ModuleRollback extends Module implements IRollback {
 		Command.addCommands(this, cmd = new CmdPastebin());
 		Command.addCommand(this, "pb", cmd);
 		
-		SQL.raw("CREATE TABLE IF NOT EXISTS rollback (channel varchar(50) NOT NULL,users text,type int(1) NOT NULL,stamp bigint(20) NOT NULL,text text NOT NULL);");
+		SQL.raw("CREATE TABLE IF NOT EXISTS rollback (channel text NOT NULL,users text,type int(1) NOT NULL,stamp BIG INTEGER(20) NOT NULL,text text NOT NULL);");
 	}
 	public void onDisable() {
 		Command.removeCommands(cmd);
@@ -122,25 +124,24 @@ public class ModuleRollback extends Module implements IRollback {
 		channel = channel.toLowerCase();
 		
 		PreparedStatement p = null;
-		String key = line.getClass().getName();
+		Connection tmpc = SQL.getSQLConnection();
+		/*String key = line.getClass().getName();*/
 		try {
-			if (SQL.statements.containsKey(key) && !SQL.statements.get(key).isClosed()) {
-				p = SQL.statements.get(key);
-			} else {
-				QueryInsert q = new QueryInsert(SQL.getTable("rollback"));
-				q.add("channel",Wildcard.blank);
-				q.add("stamp",Wildcard.blank);
-				line.fillQuery(q, true);
-				p = SQL.getSQLConnection().prepareStatement(q.getSQLQuery());
-				SQL.statements.put(key,p);
-			}
+			QueryInsert q = new QueryInsert(SQL.getTable("rollback"));
+			q.add("channel",Wildcard.blank);
+			q.add("stamp",Wildcard.blank);
+			line.fillQuery(q, true);
+			
+			p = tmpc.prepareStatement(q.getSQLQuery());
+			
 			synchronized (p) {
 				p.setString(1, channel);
 				p.setLong(2, System.currentTimeMillis());
 				line.fillQuery(p, 3);
 				p.execute();
-				p.clearParameters();
 			}
+			p.close();
+			tmpc.close();
 		} catch (SQLException e) {
 			if (p != null)
 				try {p.close();} catch (SQLException e1) {}
@@ -186,8 +187,12 @@ public class ModuleRollback extends Module implements IRollback {
 				j.close();
 		}
 	}
+//	private <T extends Line> ResultSet getResults(Class<T> type, String channel, String user, String regex, String cull, boolean newest, int lines, int seconds) throws SQLException {
+//		ResultSet ret = getResults(type, channel, user, regex, cull, newest, lines, seconds, true).rs;
+//		return ret;
+//	}
 	
-	private <T extends Line> ResultSet getResults(Class<T> type, String channel, String user, String regex, String cull, boolean newest, int lines, int seconds) throws SQLException {
+	private <T extends Line> ConnStatResultSet getResults(Class<T> type, String channel, String user, String regex, String cull, boolean newest, int lines, int seconds, Boolean close) throws SQLException {
 		int intType = TYPE_OTHER;
 		if (type == LineMessage.class) intType = TYPE_MESSAGE;
 		else if (type == LineAction.class) intType = TYPE_ACTION;
@@ -224,15 +229,17 @@ public class ModuleRollback extends Module implements IRollback {
 		}
 		q.addOrder("stamp",!newest);
 			
-		return SQL.select(q);
+		return SQL.select(q, close);
 	}
 
 	@SuppressWarnings("unchecked")
 	public synchronized <T extends Line> ArrayList<T> getRollbackLines(Class<T> type, String channel, String user, String regex, String cull, boolean newest, int lines, int seconds) {
 		ArrayList<T> ret = new ArrayList<T>();
+		ConnStatResultSet csrs = null;
 		ResultSet result = null;
 		try {
-			result = getResults(type, channel, user, regex, cull, newest, lines, seconds);
+			csrs = getResults(type, channel, user, regex, cull, newest, lines, seconds, false);
+			result = csrs.rs;
 			if (result != null) {
 				while(result.next())
 					ret.add((T)getLine(result));
@@ -244,6 +251,7 @@ public class ModuleRollback extends Module implements IRollback {
 				try {
 					if (result != null && !result.isClosed())
 						result.close();
+					csrs.c.close();
 				} catch (SQLException e) {
 				}
 		}
@@ -252,9 +260,11 @@ public class ModuleRollback extends Module implements IRollback {
 	
 	@SuppressWarnings("unchecked")
 	public synchronized <T extends Line> T getRollbackLine(ILinePredicate<T> predicate, Class<T> type, String channel, String user, String regex, String cull, boolean newest, int lines, int seconds) {
+		ConnStatResultSet csrs = null;
 		ResultSet result = null;
 		try {
-			result = getResults(type, channel, user, regex, cull, newest, lines, seconds);
+			csrs = getResults(type, channel, user, regex, cull, newest, lines, seconds, false);
+			result = csrs.rs;
 			if (result != null) {
 				while(result.next()) {
 					T line = (T) getLine(result);
@@ -262,13 +272,14 @@ public class ModuleRollback extends Module implements IRollback {
 						return line;
 				}
 			}
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
 			try {
 				if (result != null && !result.isClosed())
 					result.close();
-			} catch (SQLException e) {
+				csrs.c.close();
+			} catch (Exception e) {
 			}
 		}
 		return null;

@@ -809,8 +809,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		return array;
 	}
 	
-	private static Connection tmpc = SQL.getSQLConnection();
-	private static PreparedStatement prepareStatement(Cache cache, boolean hasChannel, boolean hasForget) throws SQLException {
+	private static PreparedStatement prepareStatement(Cache cache, boolean hasChannel, boolean hasForget, Connection c) throws SQLException {
 		String key;
 		if (hasForget) {
 			if (hasChannel)
@@ -823,31 +822,29 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 			else
 				key = getFactoidForgetHash;
 		}
-		PreparedStatement p = null;
 		//if (cache != null && cache.containsKey(sqlHash, key)) {
 		//	Object obj = cache.get(sqlHash, key);
 		//	if ((obj instanceof PreparedStatement)&& !((PreparedStatement) obj).isClosed())
 		//		p = (PreparedStatement) obj;
 		//}
-
+		PreparedStatement p = null;
 		if (p == null) {
-			try {
+			/*try {
 				tmpc.close();
 				tmpc = null;
 			} catch(SQLException e) {
 				e.printStackTrace();
-			}
-			tmpc = SQL.getSQLConnection();
+			}*/
 			if (hasForget) {
 				if (hasChannel)
-					p = tmpc.prepareStatement("SELECT * FROM factoid WHERE ((channel IS NULL OR channel=?) AND factoid=? AND forgotten=?) ORDER BY channel DESC, stamp DESC LIMIT ?");
+					p = c.prepareStatement("SELECT * FROM factoid WHERE ((channel IS NULL OR channel=?) AND factoid=? AND forgotten=?) ORDER BY channel DESC, stamp DESC LIMIT ?");
 				else
-					p = tmpc.prepareStatement("SELECT * FROM factoid WHERE (channel IS NULL AND factoid=? AND forgotten=?) ORDER BY stamp DESC LIMIT ?");
+					p = c.prepareStatement("SELECT * FROM factoid WHERE (channel IS NULL AND factoid=? AND forgotten=?) ORDER BY stamp DESC LIMIT ?");
 			} else {
 				if (hasChannel)
-					p = tmpc.prepareStatement("SELECT * FROM factoid WHERE ((channel IS NULL OR channel=?) AND factoid=?) ORDER BY channel DESC, stamp DESC LIMIT ?");
+					p = c.prepareStatement("SELECT * FROM factoid WHERE ((channel IS NULL OR channel=?) AND factoid=?) ORDER BY channel DESC, stamp DESC LIMIT ?");
 				else
-					p = tmpc.prepareStatement("SELECT * FROM factoid WHERE (channel IS NULL AND factoid=?) ORDER BY stamp DESC LIMIT ?");
+					p = c.prepareStatement("SELECT * FROM factoid WHERE (channel IS NULL AND factoid=?) ORDER BY stamp DESC LIMIT ?");
 			}
 			if (cache != null && !cache.containsKey(sqlHash, key))
 				cache.put(sqlHash, key, p);
@@ -860,7 +857,8 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		ResultSet j;
 		boolean hasChannel = channel != null;
 		try {
-			PreparedStatement p = prepareStatement(cache, hasChannel, false);
+			Connection tmpc = SQL.getSQLConnection();
+			PreparedStatement p = prepareStatement(cache, hasChannel, false, tmpc);
 			synchronized (p) {
 				int i = 1;
 				if (hasChannel)
@@ -870,9 +868,10 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 				j = p.executeQuery();
 				p.clearParameters();
 			}
-			if (j == null || j.isClosed())
+			if (j == null || j.isClosed()) {
+				System.out.println("return null;");
 				return null;
-
+			}
 			f = Factoid.fromResultSet(j);
 			if (cache == null)
 				p.close();
@@ -890,7 +889,8 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		ResultSet j;
 		boolean hasChannel = (channel != null);
 		try {
-			PreparedStatement p = prepareStatement(cache, hasChannel, true);
+			Connection tmpc = SQL.getSQLConnection();
+			PreparedStatement p = prepareStatement(cache, hasChannel, true, tmpc);
 			synchronized (p) {
 				int i = 1;
 				if (hasChannel)
@@ -908,7 +908,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 			if (cache == null)
 				p.close();
 			tmpc.close();
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
@@ -921,7 +921,8 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		ResultSet j;
 		boolean hasChannel = (channel != null);
 		try {
-			PreparedStatement p = prepareStatement(cache, hasChannel, false);
+			Connection tmpc = SQL.getSQLConnection();
+			PreparedStatement p = prepareStatement(cache, hasChannel, false, tmpc);
 			synchronized (p) {
 				int i = 1;
 				if (hasChannel)
@@ -951,7 +952,8 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		ResultSet j;
 		boolean hasChannel = (channel != null);
 		try {
-			PreparedStatement p = prepareStatement(cache, hasChannel, true);
+			Connection tmpc = SQL.getSQLConnection();
+			PreparedStatement p = prepareStatement(cache, hasChannel, true, tmpc);
 			synchronized (p) {
 				int i = 1;
 				if (hasChannel)

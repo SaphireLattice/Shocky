@@ -32,12 +32,12 @@ import pl.shockah.shocky.cmds.Parameters;
 import pl.shockah.shocky.sql.Factoid;
 import pl.shockah.shocky.threads.SandboxThreadFactory;
 import pl.shockah.shocky.threads.SandboxThreadGroup;
-import sun.org.mozilla.javascript.internal.ClassShutter;
-import sun.org.mozilla.javascript.internal.Context;
-import sun.org.mozilla.javascript.internal.ContextFactory;
-import sun.org.mozilla.javascript.internal.NativeJavaObject;
-import sun.org.mozilla.javascript.internal.Scriptable;
-import sun.org.mozilla.javascript.internal.WrapFactory;
+import org.mozilla.javascript.internal.ClassShutter;
+import org.mozilla.javascript.internal.Context;
+import org.mozilla.javascript.internal.ContextFactory;
+import org.mozilla.javascript.internal.NativeJavaObject;
+import org.mozilla.javascript.internal.Scriptable;
+import org.mozilla.javascript.internal.WrapFactory;
 
 public class ModuleJavaScript extends ScriptModule {
 	protected Command cmd;

@@ -7,7 +7,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import pl.shockah.shocky.Data;
@@ -18,6 +17,7 @@ public class SQL {
 
 	public static void raw(String query) {execute(query);}
 	public static ResultSet select(QuerySelect query) {return executeQuery(query.getSQLQuery());}
+	public static ConnStatResultSet select(QuerySelect query, Boolean close) {return executeQuery(query.getSQLQuery(),close);}
 	public static void delete(QueryDelete query) {execute(query.getSQLQuery());}
 	public static int update(QueryUpdate query) {return updateResultSet(query.getSQLQuery());}
 	
@@ -41,7 +41,7 @@ public class SQL {
 	
 	public synchronized static Connection getSQLConnection() {
 		try {
-			if (conn == null || !conn.isValid(1)) {
+			/*if (conn == null || !conn.isValid(1)) {
 				if (conn != null && !statements.isEmpty()) {
 					Iterator<PreparedStatement> iter = statements.values().iterator();
 					while(iter.hasNext()) {
@@ -49,13 +49,13 @@ public class SQL {
 						p.close();
 						iter.remove();
 					}
-				}
+				}*/
 				conn = DriverManager.getConnection("jdbc:sqlite:shocky.db");/*String.format("jdbc:mysql://%s/%s?user=%s&password=%s&useUnicode=true&characterEncoding=utf-8",
 						Data.config.getString("main-sqlhost"),
 						Data.config.getString("main-sqldb"),
 						Data.config.getString("main-sqluser"),
 						Data.config.getString("main-sqlpass")));*/
-			}
+			//}
 		} catch (SQLException e) {
 			e.printStackTrace();
 			try {
@@ -68,14 +68,26 @@ public class SQL {
 	}
 	
 	public static ResultSet executeQuery(String query) {
-		Statement s = null;
+		ConnStatResultSet tmpcsrs = executeQuery(query, true);
 		try {
-			Connection tmpc= getSQLConnection();
-			s = tmpc.createStatement();
-			ResultSet ret = s.executeQuery(query);
-			s.close();
-			tmpc.close();
-			return ret;
+			tmpcsrs.c.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+		ResultSet ret = tmpcsrs.rs;
+		return ret;
+	}
+	public static ConnStatResultSet executeQuery(String query, Boolean close) {
+		try {
+			Connection c = SQL.getSQLConnection();
+			Statement s = c.createStatement();
+			ResultSet rs = s.executeQuery(query);
+			if(close){
+				s.close();
+				c.close();
+			}
+			return new ConnStatResultSet(c,s,rs);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -92,6 +104,7 @@ public class SQL {
 			tmpc.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
+			System.out.println(query);
 		}
 	}
 	

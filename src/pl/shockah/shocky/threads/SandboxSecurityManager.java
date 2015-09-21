@@ -41,6 +41,7 @@ public class SandboxSecurityManager extends SecurityManager
 		
 		this.readonlyFiles = readonlyFiles;
 		allowed.add(new FilePermission(System.getProperty("java.home").replace('\\','/')+"/lib/-","read"));
+		allowed.add(new FilePermission("/usr/lib/jvm/java-8-oracle/jre/lib/security/cacerts","read"));
 		
 		//String cd = '/'+System.getProperty("user.dir").replace('\\','/');
 		for (int i = 0; i <libs.length; i++) {
@@ -72,7 +73,7 @@ public class SandboxSecurityManager extends SecurityManager
 		
 		disallowed.add(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 		disallowed.add(SecurityConstants.STOP_THREAD_PERMISSION);
-		disallowed.add(SecurityConstants.DO_AS_PRIVILEGED_PERMISSION);
+		//disallowed.add(SecurityConstants.DO_AS_PRIVILEGED_PERMISSION);
 		
 		disallowed.setReadOnly();
 	}
