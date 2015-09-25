@@ -109,7 +109,19 @@ public abstract class Module extends ListenerAdapter implements IModule, Compara
 		} else {
 			if (this.enabled)
 				return false;
-			this.onEnable(Data.lastSave);
+			try{
+				this.onEnable(Data.lastSave);
+			} catch(Exception e) {
+				try{
+				String name = this.name();
+				Data.config.set("module-"+name,false);
+				System.out.println("Module \""+name+"\" failed to load, stacktrace following:");
+				name = null;
+				} catch(Exception el) {
+					el.printStackTrace();
+				}
+				e.printStackTrace();
+			}
 			if (this.isListener())
 				Shocky.getBotManager().getListenerManager().addListener(this);
 			if (this instanceof IAcceptURLs)

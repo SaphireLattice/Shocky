@@ -39,7 +39,6 @@ public abstract class ModuleLoader {
 					String moduleName = file.getName(); 
 					if (moduleName.endsWith(".class")) moduleName = new StringBuilder(moduleName).reverse().delete(0,6).reverse().toString(); else return null;
 					if (moduleName.contains("$")) return null;
-					
 					c = new URLClassLoader(new URL[]{file.getParentFile().toURI().toURL()}).loadClass(moduleName);
 				} else if (source.source instanceof URL) {
 					URL url = (URL)source.source;

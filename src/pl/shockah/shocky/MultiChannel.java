@@ -60,7 +60,7 @@ public class MultiChannel {
 	
 	public static void startWebServer(PircBotX bot) {
 		try {
-			if (!WebServer.exists() && WebServer.start(bot.getInetAddress().getHostAddress(),8000))
+			if (!WebServer.exists() && WebServer.start("eos.pc-logix.com", 8000)) //bot.getInetAddress().getHostAddress(),8000))
 				System.out.println("--- Shocky web server is running! ---");
 		} catch (IOException e) {
 			e.printStackTrace();

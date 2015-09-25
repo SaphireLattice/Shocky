@@ -42,7 +42,9 @@ public class SandboxSecurityManager extends SecurityManager
 		this.readonlyFiles = readonlyFiles;
 		allowed.add(new FilePermission(System.getProperty("java.home").replace('\\','/')+"/lib/-","read"));
 		allowed.add(new FilePermission("/usr/lib/jvm/java-8-oracle/jre/lib/security/cacerts","read"));
-		
+		allowed.add(new FilePermission("./shocky.db","read,write"));
+		allowed.add(new FilePermission("/home/saphire/Shocky","read,write"));
+		allowed.add(new FilePermission("/usr/lib/sqlite3/pcre.so","read,execute"));
 		//String cd = '/'+System.getProperty("user.dir").replace('\\','/');
 		for (int i = 0; i <libs.length; i++) {
 			String lib = libs[i];

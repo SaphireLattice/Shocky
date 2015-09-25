@@ -1,13 +1,14 @@
 package pl.shockah.shocky.sql;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.sqlite.SQLiteConfig;
 
 import pl.shockah.shocky.Data;
 
@@ -49,14 +50,22 @@ public class SQL {
 						p.close();
 						iter.remove();
 					}
-				}*/
-				conn = DriverManager.getConnection("jdbc:sqlite:shocky.db");/*String.format("jdbc:mysql://%s/%s?user=%s&password=%s&useUnicode=true&characterEncoding=utf-8",
-						Data.config.getString("main-sqlhost"),
-						Data.config.getString("main-sqldb"),
-						Data.config.getString("main-sqluser"),
-						Data.config.getString("main-sqlpass")));*/
+				}
+				
+				conn = DriverManager.getConnection("jdbc:sqlite:shocky.db", null);
+				*/
+			SQLiteConfig sqlconf = new SQLiteConfig();
+			sqlconf.enableLoadExtension(true);
+			conn = sqlconf.createConnection("jdbc:sqlite:shocky.db");
+			Statement stmt = conn.createStatement();
+			stmt.setQueryTimeout(30);
+			try (ResultSet rs = stmt.executeQuery("SELECT load_extension('/usr/lib/sqlite3/pcre');")) {
+				while (rs.next()) {}
+			   	rs.close();
+			}
+		    stmt.close();
 			//}
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			try {
 			conn.close();

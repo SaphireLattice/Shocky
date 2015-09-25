@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -23,7 +24,7 @@ public class WebServer {
 	
 	public static boolean start(String host, int port) throws IOException {
 		try {
-			InetSocketAddress addr = new InetSocketAddress(host, port);
+			InetSocketAddress addr = new InetSocketAddress(Inet4Address.getByName("eos.pc-logix.com"), port);
 			if (server != null)
 				server.stop(0);
 			server = HttpServer.create(addr, 0);

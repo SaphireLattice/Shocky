@@ -36,6 +36,7 @@ manifest.mf
 # Shocky Stuff
 modules/
 data/
-
+.directory
+shocky.db
 shocky.jar
 run.bat

@@ -63,11 +63,11 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 	public void onEnable(File dir) {
 		Data.config.setNotExists("idlerpg-channel", "#ssss");
 		Data.config.setNotExists("idlerpg-announce", true);
-		Data.config.setNotExists("idlerpg-leaderboards-print", 5);
+		Data.config.setNotExists("idlerpg-leaderboards-print", 10);
 		if (!Data.protectedKeys.contains("idlerpg-channel"))
 			Data.protectedKeys.addAll(Arrays.asList(new String[] {"idlerpg-channel", "idlerpg-announce", "idlerpg-leaderboards-print" }));
 		try {
-			SQL.raw("CREATE TABLE IF NOT EXISTS idlerpg (name text NOT NULL, level INTEGER NOT NULL, xp BIG INTEGER(20), lastupdate BIG INTEGER(20) NOT NULL);");
+			SQL.raw("CREATE TABLE IF NOT EXISTS idlerpg (name text NOT NULL, level INTEGER NOT NULL, xp BIG INTEGER(20) NOT NULL, lastupdate BIG INTEGER(20) NOT NULL);");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -250,9 +250,61 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 
 			check.update(session);
 			send(ev, check.printStatus(session, true, true));
-		} else if ((spl.length == 1)
-				&& ("leaderboards".startsWith(spl[0].toLowerCase()))) {
-			//TODO: write leaderboard SQL iteration
+		} else if ((spl.length >= 1)
+				&& ("leaderboards".startsWith(spl[0].toLowerCase())) ) {
+			//TODO: rewrite leaderboards to use SQL
+			
+			int maxPrint = Data.config.getInt("idlerpg-leaderboards-print");
+			try{
+				if (spl.length >= 2)
+						maxPrint = Integer.parseInt(spl[1]);}
+			catch (ArrayIndexOutOfBoundsException e){
+			}
+			StringBuilder print = new StringBuilder();
+			StringBuilder paste = new StringBuilder();
+			
+			ConnStatResultSet csrs = null;
+			ResultSet rs = null;
+			try{
+				QuerySelect q = new QuerySelect(SQL.getTable("idlerpg"));
+				q.addOrder("level",false);
+				q.addOrder("xp",false);
+				q.setLimitCount(maxPrint);
+				csrs = SQL.select(q,false);
+				rs = csrs.rs;
+				if (rs != null){
+					Integer i = -1;
+					while(rs.next()) {
+						Player p = new Player(rs.getString("name"), rs.getInt("level"), rs.getInt("xp"), rs.getLong("lastupdate"));
+						
+						i++;
+						if (i != 0) {
+							if (i < maxPrint)
+								print.append(" | ");
+							//paste.append('\n');
+						}
+						
+						if (i < maxPrint)
+							print.append(i + 1).append(". ").append(p.printStatus(session, false, false, false));
+						//paste.append(i + 1).append(". ").append(p.printStatus(session, true, false));
+					}
+				}
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			} finally {
+				try {
+					if (rs != null && !rs.isClosed())
+						rs.close();
+					csrs.c.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			
+			send(ev, Utils.mungeAllNicks(ev.getChannel(), 0, print, ev.getUser()));
+			
 			//for (Player p : this.players.values())
 			//	p.update(session);
 
@@ -261,10 +313,6 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 			
 			Collections.sort(list, new ComparatorLevel(false));
 
-			StringBuilder print = new StringBuilder();
-			StringBuilder paste = new StringBuilder();
-
-			int maxPrint = Data.config.getInt("idlerpg-leaderboards-print");
 			for (int i = 0; i < list.size(); i++) {
 				if (i != 0) {
 					if (i < maxPrint)
@@ -282,9 +330,7 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 				String url = Utils.paste(paste);
 				if ((url != null) && (!url.isEmpty()))
 					print.append(" | Full leaderboards: ").append(url);
-			}
-
-			send(ev, Utils.mungeAllNicks(ev.getChannel(), 0, print, ev.getUser()));/**/
+			}/**/
 		}
 	}
 
@@ -323,6 +369,13 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 			return new String(c);
 		}
 
+		public Player(String name, Integer level, Integer xp, Long lastUpdate) {
+			this.name = name;
+			this.level = level;
+			this.xp = xp;
+			this.lastUpdate = lastUpdate;
+		}
+		
 		public Player(String name) {
 			this.name = name;
 			this.level = 1;
@@ -347,8 +400,12 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 			if (this.xp > xp2l)
 				this.xp = xp2l;
 		}
-
+		
 		public String printStatus(Session session, boolean printXP, boolean printTime) {
+			return printStatus(session, printXP, printTime, true);
+		}
+		
+		public String printStatus(Session session, boolean printXP, boolean printTime, Boolean announce) {
 			StringBuilder sb = new StringBuilder();
 			sb.append(this.name);
 			if ((session.identify.equalsIgnoreCase(this.name)) && (!session.user.getNick().equalsIgnoreCase(this.name)))
@@ -368,7 +425,8 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 										.equalsIgnoreCase(this.name)))
 							sb2.append(" / ").append(session.user.getNick());
 						sb2.append(" achieved level ").append(this.level).append("! <<<");
-						ModuleIdleRPG.announce(session, sb2.toString());
+						if(announce)
+							ModuleIdleRPG.announce(session, sb2.toString());
 					}
 				} else if (this.xp == xp2l)
 					sb.append(", level up available");
