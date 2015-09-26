@@ -111,16 +111,16 @@ public class ModuleHighFiveSQL extends Module implements ILua {
 				QueryInsert qi = new QueryInsert(SQL.getTable("highfive"));
 				qi.add("pair",Wildcard.blank);
 				qi.add("times",Wildcard.blank);
-				qi.add("identified",Wildcard.blank);
 				qi.add("timestamp",Wildcard.blank);
+				qi.add("identified",Wildcard.blank);
 				
 				Connection tmpc = SQL.getSQLConnection();
 				PreparedStatement p = tmpc.prepareStatement(qi.getSQLQuery());
 				synchronized (pa) {
 					p.setString(1, pa.toString());
 					p.setInt(2, pa.times);
-					p.setInt(3, pa.id);
-					p.setLong(4, pa.timestamp);
+					p.setLong(3, pa.timestamp);
+					p.setInt(4, pa.id);
 					p.execute();
 				}
 				p.close();
@@ -154,7 +154,7 @@ public class ModuleHighFiveSQL extends Module implements ILua {
 		
 		Pair p = getPair(nick1, nick2, identified);
 		if (p == null) {
-			p = new Pair(nick1, nick2, identified);
+			p = new Pair(nick1, nick2, ((identified & 2) == 2), ((identified & 1) == 1));
 		}
 		
 		p.times = p.times+change;
@@ -213,7 +213,7 @@ public class ModuleHighFiveSQL extends Module implements ILua {
 				nick = id;
 			}
 			
-			Pair p = new Pair(nick_s, nick, identified);
+			Pair p = new Pair(nick_s, nick, ((identified & 2) == 2), ((identified & 1) == 1));
 			
 			p = changeStat(p, 1);
 			if (p.times != 0) {
