@@ -73,7 +73,7 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 		}
 	}
 
-	private Player GetPlayerFromSQL(String identify) {
+	public static Player GetPlayerFromSQL(String identify) {
 		Player ret = null;
 		ConnStatResultSet csrs = null;
 		ResultSet rs = null;
@@ -108,61 +108,39 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 	}
 	
 	public static synchronized void UpdatePlayerToSQL(String identify, Player player) {
-		ConnStatResultSet csrs = null;
-		ResultSet rs = null;
 		if(player==null)
 			return;
 		try{
-			QuerySelect q = new QuerySelect(SQL.getTable("idlerpg"));
-			q.addCriterions(new CriterionString("name", Operation.Equals, identify));
-			q.setLimitCount(1);
-			csrs = SQL.select(q, false);
-			rs = csrs.rs;
-			if (rs != null){
-				if (rs.next()) {
-					csrs.rs.close();
-					csrs.c.close();
-					QueryUpdate qu = new QueryUpdate(SQL.getTable("idlerpg"));
-					qu.addCriterions(new CriterionString("name", CriterionNumber.Operation.Equals, identify));
-					qu.set("level", player.level);
-					qu.set("xp", player.xp);
-					qu.set("lastupdate", player.lastUpdate);
-					SQL.update(qu);
+			if (GetPlayerFromSQL(identify) != null) {
+				QueryUpdate qu = new QueryUpdate(SQL.getTable("idlerpg"));
+				qu.addCriterions(new CriterionString("name", CriterionNumber.Operation.Equals, identify));
+				qu.set("level", player.level);
+				qu.set("xp", player.xp);
+				qu.set("lastupdate", player.lastUpdate);
+				SQL.update(qu);
+			}
+			else {
+				QueryInsert qi = new QueryInsert(SQL.getTable("idlerpg"));
+				qi.add("name",Wildcard.blank);
+				qi.add("level",Wildcard.blank);
+				qi.add("xp",Wildcard.blank);
+				qi.add("lastupdate",Wildcard.blank);
+				
+				Connection tmpc = SQL.getSQLConnection();
+				PreparedStatement p = tmpc.prepareStatement(qi.getSQLQuery());
+				synchronized (p) {
+					p.setString(1, identify);
+					p.setInt(2, player.level);
+					p.setInt(3, player.xp);
+					p.setLong(4, player.lastUpdate);
+					p.execute();
 				}
-				else {
-					csrs.rs.close();
-					csrs.c.close();
-					QueryInsert qi = new QueryInsert(SQL.getTable("idlerpg"));
-					qi.add("name",Wildcard.blank);
-					qi.add("level",Wildcard.blank);
-					qi.add("xp",Wildcard.blank);
-					qi.add("lastupdate",Wildcard.blank);
-					
-					Connection tmpc = SQL.getSQLConnection();
-					PreparedStatement p = tmpc.prepareStatement(qi.getSQLQuery());
-					synchronized (p) {
-						p.setString(1, identify);
-						p.setInt(2, player.level);
-						p.setInt(3, player.xp);
-						p.setLong(4, player.lastUpdate);
-						p.execute();
-					}
-					p.close();
-					tmpc.close();
-				}
+				p.close();
+				tmpc.close();
 			}
 		} catch(Exception e)
 		{
 			e.printStackTrace();
-		} finally {
-			try {
-				if (rs != null && !rs.isClosed())
-					rs.close();
-				if (csrs.c != null && !csrs.c.isClosed())
-					csrs.c.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
 		}
 		return;
 	}

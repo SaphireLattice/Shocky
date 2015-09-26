@@ -72,7 +72,7 @@ public class ModuleHighFive extends Module implements ILua {
 		
 		if (s == null) {
 			time = System.currentTimeMillis()+Data.forChannel(event.getChannel()).getInt("hf-maxtime");
-			//event.respond(String.format("Will expired at %s", DateFormat.getDateTimeInstance().format(new Date(time))));
+			//event.respond(String.format("Will expire at %s", DateFormat.getDateTimeInstance().format(new Date(time))));
 			started.put(chan,event.getUser());
 			timers.put(chan,time);
 		} else {
