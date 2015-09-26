@@ -121,6 +121,7 @@ public abstract class Module extends ListenerAdapter implements IModule, Compara
 					el.printStackTrace();
 				}
 				e.printStackTrace();
+				return false;
 			}
 			if (this.isListener())
 				Shocky.getBotManager().getListenerManager().addListener(this);

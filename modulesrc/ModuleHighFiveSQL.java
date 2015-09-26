@@ -61,13 +61,13 @@ public class ModuleHighFiveSQL extends Module implements ILua {
 		try{
 			QuerySelect q = new QuerySelect(SQL.getTable("highfive"));
 			
-			q.addCriterions(new CriterionString("name",Operation.Equals,n1 + "_" + n2));
+			q.addCriterions(new CriterionString("pair",Operation.Equals,n1 + "_" + n2));
 			
 			if (i != null) {
-				q.addOrder("id", true);
+				q.addOrder("identified", true);
 				q.addCriterions(new CriterionNumber("identified",Operation.Equals,i));
 			} else
-				q.addOrder("id", false);
+				q.addOrder("identified", false);
 			
 			q.addOrder("timestamp", false);
 			q.setLimitCount(1);
@@ -97,18 +97,18 @@ public class ModuleHighFiveSQL extends Module implements ILua {
 		return ret;
 	}
 	
-	public Boolean updatePair(Pair pa) {
+	public synchronized Boolean updatePair(Pair pa) {
 		try {
 			if (getPair(pa) != null) {
-				QueryUpdate qu = new QueryUpdate(SQL.getTable("idlerpg"));
+				QueryUpdate qu = new QueryUpdate(SQL.getTable("highfive"));
 				qu.addCriterions(new CriterionString("pair", CriterionNumber.Operation.Equals, pa.toString()));
+				qu.addCriterions(new CriterionNumber("identified", CriterionNumber.Operation.Equals, pa.id));
 				qu.set("times", pa.times);
-				qu.set("pair", pa.toString());
 				qu.set("timestamp", pa.timestamp);
 				SQL.update(qu);
 			}
 			else {
-				QueryInsert qi = new QueryInsert(SQL.getTable("idlerpg"));
+				QueryInsert qi = new QueryInsert(SQL.getTable("highfive"));
 				qi.add("pair",Wildcard.blank);
 				qi.add("times",Wildcard.blank);
 				qi.add("identified",Wildcard.blank);
@@ -168,7 +168,7 @@ public class ModuleHighFiveSQL extends Module implements ILua {
 		Data.config.setNotExists("hf-announce",true);
 		Data.config.setNotExists("hf-maxtime",1000*60*5);
 		try {
-			SQL.raw("CREATE TABLE IF NOT EXISTS highfive (pair text NOT NULL, times INTEGER NOT NULL, timestamp BIG INTEGER(20) NOT NULL, integer(2) identified );");
+			SQL.raw("CREATE TABLE IF NOT EXISTS highfive (pair text NOT NULL, times INTEGER NOT NULL, timestamp BIG INTEGER(20) NOT NULL, identified int(2) NOT NULL  );");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -204,11 +204,12 @@ public class ModuleHighFiveSQL extends Module implements ILua {
 			Integer identified = 0;
 			String nick_s = s.getNick();
 			if (id_s != null) {
-				
+				identified = 2;
 				nick_s = id_s;
 			}
 			String nick = event.getUser().getNick();
 			if (id != null){
+				identified += 1;
 				nick = id;
 			}
 			
