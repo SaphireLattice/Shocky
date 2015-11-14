@@ -97,10 +97,15 @@ public class Parameters {
 		if (Shocky.getLogin(sender) == null) return false;
 		return Data.controllers.contains(Shocky.getLogin(sender));
 	}
+	
 	public void checkController() {
+		checkController("Must be a controller to use this command.");
+	}
+	
+	public void checkController(String msg) {
 		if (isController())
 			return;
-		throw new AuthorizationException("Must be a controller to use this command.");
+		throw new AuthorizationException(msg);
 	}
 	
 	public boolean isOp() {
