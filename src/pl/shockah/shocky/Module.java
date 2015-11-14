@@ -1,6 +1,8 @@
 package pl.shockah.shocky;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,6 +18,7 @@ import pl.shockah.shocky.interfaces.IAcceptURLs;
 import pl.shockah.shocky.interfaces.IModule;
 
 public abstract class Module extends ListenerAdapter implements IModule, Comparable<Module> {
+	private URLClassLoader urlcl = null;
 	private static final List<Module> modules = Collections.synchronizedList(new ArrayList<Module>());
 	private static final List<ModuleLoader> loaders = Collections.synchronizedList(new ArrayList<ModuleLoader>());
 	private static final Map<String, ScriptModule> scriptingModules = Collections.synchronizedMap(new HashMap<String,ScriptModule>());
@@ -46,13 +49,16 @@ public abstract class Module extends ListenerAdapter implements IModule, Compara
 	public static Module load(ModuleSource<?> source) {
 		Module module = null;
 		for (int i = 0; i < loaders.size(); i++) {
-			if (loaders.get(i).accept(source)) module = loaders.get(i).loadModule(source);
+			if (loaders.get(i).accept(source)) {
+				try { module = loaders.get(i).loadModule(source);}
+				catch (NoClassDefFoundError e) { e.printStackTrace(); }
+			}
+				
 			if (module != null) {
 				setup(module,loaders.get(i),source);
 				break;
 			}
 		}
-		
 		if (module != null) {
 			for (int i = 0; i < modules.size(); i++) if (modules.get(i).name().equals(module.name())) {
 				module.loader.unloadModule(module);
@@ -65,7 +71,7 @@ public abstract class Module extends ListenerAdapter implements IModule, Compara
 				ScriptModule sModule = (ScriptModule)module;
 				scriptingModules.put(sModule.identifier(), sModule);
 			}
-		}
+		} 
 		return module;
 	}
 	
@@ -113,10 +119,10 @@ public abstract class Module extends ListenerAdapter implements IModule, Compara
 				this.onEnable(Data.lastSave);
 			} catch(Exception e) {
 				try{
-				String name = this.name();
-				Data.config.set("module-"+name,false);
-				System.out.println("Module \""+name+"\" failed to load, stacktrace following:");
-				name = null;
+					String name = this.name();
+					Data.config.set("module-"+name,false);
+					System.out.println("Module \""+name+"\" failed to load, stacktrace following:");
+					name = null;
 				} catch(Exception el) {
 					el.printStackTrace();
 				}
@@ -213,6 +219,15 @@ public abstract class Module extends ListenerAdapter implements IModule, Compara
 		if (this.disabledChannnels.contains(channel))
 			return false;
 		return this.enabled;
+	}
+	
+	public final void SetURLClassLoader(URLClassLoader cl)
+	{
+		this.urlcl = cl;
+	}
+	
+	public final URLClassLoader GetURLClassLoader() {
+		return this.urlcl;
 	}
 	
 	public final int compareTo(Module module) {

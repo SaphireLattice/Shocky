@@ -37,7 +37,7 @@ public class ModuleHighFiveSQL extends Module implements ILua {
 	}
 	
 	public Pair getPair(String n1, String n2, Boolean i1, Boolean i2) {
-		Integer im = 0;
+		Integer im = 0; //"identified mask", second bit - first user, first bit - second user
 		if (i1 == true)
 			im = 2;
 		if (i2 == true)
@@ -116,7 +116,7 @@ public class ModuleHighFiveSQL extends Module implements ILua {
 				
 				Connection tmpc = SQL.getSQLConnection();
 				PreparedStatement p = tmpc.prepareStatement(qi.getSQLQuery());
-				synchronized (pa) {
+				synchronized (p) {
 					p.setString(1, pa.toString());
 					p.setInt(2, pa.times);
 					p.setLong(3, pa.timestamp);

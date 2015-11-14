@@ -45,6 +45,7 @@ public class Shocky extends ListenerAdapter {
 		Module.loadNewModules();
 		Utils.initPasteServices();
 		
+
 		System.out.println("--- Shocky, the IRC bot, up and running! ---");
 		System.out.println("--- type \"help\" to list all available commands ---");
 		
@@ -57,7 +58,6 @@ public class Shocky extends ListenerAdapter {
 			delay = 300;
 		futureSave = timer.scheduleAtFixedRate(saver, delay, delay, TimeUnit.MINUTES);
 		
-		new ThreadConsoleInput().start();
 		List<File> files = new ArrayList<File>();
 		for (Module module : Module.getModules())
 		{

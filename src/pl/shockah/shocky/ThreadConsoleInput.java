@@ -2,7 +2,6 @@ package pl.shockah.shocky;
 
 import java.io.Console;
 
-import pl.shockah.shocky.cmds.AuthorizationException;
 import pl.shockah.shocky.cmds.Parameters;
 import pl.shockah.shocky.cmds.Command;
 import pl.shockah.shocky.cmds.CommandCallback;
@@ -24,7 +23,7 @@ public class ThreadConsoleInput extends Thread {
 					Parameters params = new Parameters(null,Command.EType.Console,null,null,s);
 					try {
 						cmd.doCommand(params,callback);
-					} catch (AuthorizationException e) {
+					} catch (Exception e) {
 						Shocky.sendConsole(e.toString());
 						continue;
 					}

@@ -227,10 +227,11 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 			}
 
 			check.update(session);
+			UpdatePlayerToSQL(check.name , check);
 			send(ev, check.printStatus(session, true, true));
 		} else if ((spl.length >= 1)
 				&& ("leaderboards".startsWith(spl[0].toLowerCase())) ) {
-			//TODO: rewrite leaderboards to use SQL
+			//DONE: rewrite leaderboards to use SQL
 			
 			int maxPrint = Data.config.getInt("idlerpg-leaderboards-print");
 			try{
@@ -243,15 +244,15 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 			
 			ConnStatResultSet csrs = null;
 			ResultSet rs = null;
+			Integer i = -1;
 			try{
 				QuerySelect q = new QuerySelect(SQL.getTable("idlerpg"));
 				q.addOrder("level",false);
 				q.addOrder("xp",false);
-				q.setLimitCount(maxPrint);
+				//q.setLimitCount(maxPrint);
 				csrs = SQL.select(q,false);
 				rs = csrs.rs;
 				if (rs != null){
-					Integer i = -1;
 					while(rs.next()) {
 						Player p = new Player(rs.getString("name"), rs.getInt("level"), rs.getInt("xp"), rs.getLong("lastupdate"));
 						
@@ -259,12 +260,12 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 						if (i != 0) {
 							if (i < maxPrint)
 								print.append(" | ");
-							//paste.append('\n');
+							paste.append('\n');
 						}
 						
 						if (i < maxPrint)
 							print.append(i + 1).append(". ").append(p.printStatus(session, false, false, false));
-						//paste.append(i + 1).append(". ").append(p.printStatus(session, true, false));
+						paste.append(i + 1).append(". ").append(p.printStatus(session, true, false, false));
 					}
 				}
 			}
@@ -281,8 +282,12 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 				}
 			}
 			
+			if (i > maxPrint) {
+				String url = Utils.paste(paste);
+				if ((url != null) && (!url.isEmpty()))
+					print.append(" | Full leaderboards: ").append(url);
+			}
 			send(ev, Utils.mungeAllNicks(ev.getChannel(), 0, print, ev.getUser()));
-			
 			//for (Player p : this.players.values())
 			//	p.update(session);
 
@@ -372,7 +377,6 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 					&& (this.xp >= xp2l)) {
 				this.xp = 0;
 				this.level += 1;
-				UpdatePlayerToSQL(session.identify , this);
 			}
 
 			if (this.xp > xp2l)

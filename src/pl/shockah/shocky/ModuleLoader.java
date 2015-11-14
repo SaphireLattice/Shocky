@@ -1,6 +1,7 @@
 package pl.shockah.shocky;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -16,7 +17,14 @@ public abstract class ModuleLoader {
 		return m;
 	}
 	protected void unloadModule(Module module) {
-		if (modules.contains(module)) modules.remove(module);
+		if (modules.contains(module)) {
+			modules.remove(module);
+			try {
+				module.GetURLClassLoader().close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	public void unloadAllModules() {
@@ -32,6 +40,7 @@ public abstract class ModuleLoader {
 		}
 		protected Module load(ModuleSource<?> source) {
 			Module module = null;
+			URLClassLoader tmpcl = null;
 			try {
 				Class<?> c = null;
 				if (source.source instanceof File) {
@@ -39,7 +48,11 @@ public abstract class ModuleLoader {
 					String moduleName = file.getName(); 
 					if (moduleName.endsWith(".class")) moduleName = new StringBuilder(moduleName).reverse().delete(0,6).reverse().toString(); else return null;
 					if (moduleName.contains("$")) return null;
-					c = new URLClassLoader(new URL[]{file.getParentFile().toURI().toURL()}).loadClass(moduleName);
+					
+					URL[] tmp = new URL[]{file.getParentFile().toURI().toURL()};
+					tmpcl = new URLClassLoader(tmp);
+					c = tmpcl.loadClass(moduleName);
+					//tmpcl.close();
 				} else if (source.source instanceof URL) {
 					URL url = (URL)source.source;
 					String moduleName = url.toString();
@@ -49,11 +62,17 @@ public abstract class ModuleLoader {
 					if (moduleName.endsWith(".class")) moduleName = new StringBuilder(moduleName).reverse().delete(0,6).reverse().toString(); else return null;
 					if (moduleName.contains("$")) return null;
 					
-					c = new URLClassLoader(new URL[]{new URL(modulePath)}).loadClass(moduleName);
+					URL[] tmp = new URL[]{new URL(modulePath)};
+					tmpcl = new URLClassLoader(tmp);
+					c = tmpcl.loadClass(moduleName);
+					//tmpcl.close();
 				}
 				
 				if (c != null && Module.class.isAssignableFrom(c))
+				{
 					module = (Module)c.newInstance();
+					module.SetURLClassLoader(tmpcl);
+				}
 			} catch (Exception e) {e.printStackTrace();}
 			return module;
 		}

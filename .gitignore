@@ -1,3 +1,7 @@
+#old files
+*.old
+*.bck
+
 *.class
 
 # Package Files #
