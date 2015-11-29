@@ -1,5 +1,6 @@
 Shocky
 ======
+Forked from https://github.com/clone1018/Shocky
 
 Instructions
 -----
