@@ -23,6 +23,7 @@ public class WebServer {
 	private static AtomicInteger pasteID = new AtomicInteger(1);
 	
 	public static boolean start(String host, int port) throws IOException {
+		Data.config.setNotExists("web-hostname","");
 		try {
 			InetSocketAddress addr = new InetSocketAddress(Inet4Address.getByName("eos.pc-logix.com"), port);
 			if (server != null)
@@ -53,6 +54,20 @@ public class WebServer {
 		if (server == null)
 			return null;
 		return server.getAddress();
+	}
+	
+	public static String getURL() {
+		if (server == null)
+			return null;
+		String hostname = Data.config.getString("web-hostname");
+		if (!hostname.isEmpty())
+			return hostname;
+		InetSocketAddress addr = address();
+		StringBuilder sb = new StringBuilder("http://");
+		sb.append(addr.getHostName());
+		if (addr.getPort()!=80)
+			sb.append(':').append(addr.getPort());
+		return sb.toString();
 	}
 	
 	public static boolean removeContext(HttpContext context) {

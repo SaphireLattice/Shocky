@@ -74,6 +74,10 @@ public class SandboxSecurityManager extends SecurityManager
 		
 		disallowed.add(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 		disallowed.add(SecurityConstants.STOP_THREAD_PERMISSION);
+<<<<<<< HEAD
+		//disallowed.add(SecurityConstants.DO_AS_PRIVILEGED_PERMISSION);
+=======
+>>>>>>> 7e154395f94ca025c0cd904dca2afe49fb6676eb
 		
 		disallowed.setReadOnly();
 	}

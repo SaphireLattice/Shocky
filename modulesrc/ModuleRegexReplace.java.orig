@@ -30,9 +30,14 @@ import pl.shockah.shocky.lines.LineWithUsers;
 
 public class ModuleRegexReplace extends Module {
 
+<<<<<<< HEAD
+	public static final Pattern sedPattern = Pattern.compile("^([sm])/([^/]+)/([^/]+)/?([a-z]*)");
+	public static String[] groupColors = new String[] { Colors.BLUE + ",02",Colors.RED + ",05", Colors.GREEN + ",03", Colors.MAGENTA + ",06",Colors.CYAN + ",10" };
+=======
 	public static enum Type {SUB, MATCH, TRANSLATE};
 	public static final Pattern sedPattern = Pattern.compile("^([sm]|tr)/(.*?(?<!\\\\))/(?:(.*?(?<!\\\\))/)?([a-z]*)");
 	public static String[] groupColors = new String[] {"01,14","03,09","10,11","05,04","06,13","07,08","02,12","15,00"};
+>>>>>>> 7e154395f94ca025c0cd904dca2afe49fb6676eb
 
 	@Override
 	public String name() {return "regexreplace";}

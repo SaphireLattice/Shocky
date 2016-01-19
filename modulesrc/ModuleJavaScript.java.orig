@@ -41,6 +41,15 @@ import pl.shockah.shocky.js.ShockyScriptFunction;
 import pl.shockah.shocky.sql.Factoid;
 import pl.shockah.shocky.threads.SandboxThreadFactory;
 import pl.shockah.shocky.threads.SandboxThreadGroup;
+<<<<<<< HEAD
+import org.mozilla.javascript.internal.ClassShutter;
+import org.mozilla.javascript.internal.Context;
+import org.mozilla.javascript.internal.ContextFactory;
+import org.mozilla.javascript.internal.NativeJavaObject;
+import org.mozilla.javascript.internal.Scriptable;
+import org.mozilla.javascript.internal.WrapFactory;
+=======
+>>>>>>> 7e154395f94ca025c0cd904dca2afe49fb6676eb
 
 public class ModuleJavaScript extends ScriptModule {
 	protected Command cmd;

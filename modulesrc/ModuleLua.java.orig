@@ -140,6 +140,10 @@ public class ModuleLua extends ScriptModule implements ResourceFinder {
 			Class.forName("org.luaj.vm2.lib.LuaState");
 			Class.forName("ModuleLua$CmdFunction");
 			Class.forName("pl.shockah.Delegate$Instance");
+<<<<<<< HEAD
+			//new RhinoScriptEngine().eval("0");
+=======
+>>>>>>> 7e154395f94ca025c0cd904dca2afe49fb6676eb
 			if (!scripts.exists())
 				scripts.mkdirs();
 			if (binary.exists()) {

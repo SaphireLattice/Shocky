@@ -85,10 +85,17 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		Data.config.setNotExists("python-url", "http://eval.appspot.com/eval");
 		Data.protectedKeys.add("php-url");
 		Data.protectedKeys.add("python-url");
+<<<<<<< HEAD
 
 		SQL.raw("CREATE TABLE IF NOT EXISTS factoid (id INTEGER PRIMARY KEY AUTOINCREMENT ,channel varchar(50) DEFAULT NULL,factoid text NOT NULL,author text NOT NULL,rawtext text NOT NULL,stamp unsigned int(10) NOT NULL,locked unsigned int(1) NOT NULL DEFAULT '0',forgotten unsigned int(1) NOT NULL DEFAULT '0');");
 				//+ SQL.getTable("factoid"
 				//+ " (id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,channel varchar(50) DEFAULT NULL,factoid text NOT NULL,author text NOT NULL,rawtext text NOT NULL,stamp int(10) unsigned NOT NULL,locked int(1) unsigned NOT NULL DEFAULT '0',forgotten int(1) unsigned NOT NULL DEFAULT '0',PRIMARY KEY (id),INDEX channel (channel)) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+=======
+		
+		SQL.raw("CREATE TABLE IF NOT EXISTS "
+				+ SQL.getTable("factoid")
+				+ " (id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,channel varchar(50) DEFAULT NULL,factoid text NOT NULL,author text NOT NULL,rawtext text NOT NULL,stamp int(10) unsigned NOT NULL,locked int(1) unsigned NOT NULL DEFAULT '0',forgotten int(1) unsigned NOT NULL DEFAULT '0',PRIMARY KEY (id),INDEX channel (channel)) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+>>>>>>> 7e154395f94ca025c0cd904dca2afe49fb6676eb
 
 		Command.addCommands(this, cmdR = new CmdRemember(), cmdF = new CmdForget(), cmdU = new CmdUnforget(), cmdFCMD = new CmdFactoidCmd(), cmdManage = new CmdManage(), cmdFMap = new CommandRegistry());
 
