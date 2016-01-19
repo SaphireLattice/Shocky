@@ -23,6 +23,7 @@ import org.pircbotx.hooks.events.IncomingChatRequestEvent;
 
 import pl.shockah.shocky.Data;
 import pl.shockah.shocky.Module;
+import pl.shockah.shocky.MultiChannel;
 import pl.shockah.shocky.Shocky;
 import pl.shockah.shocky.interfaces.ILogger;
 import pl.shockah.shocky.sql.SQL;
@@ -32,11 +33,12 @@ public class ModuleDCC extends Module {
 	
 	public static interface ProgramFactory {
 		Program start(DccChat chat);
+		Program start(DccChat chat, PircBotX bot);
 	}
 	
 	public Map<String,ProgramFactory> programs = new HashMap<String,ProgramFactory>();
 	private List<Session> sessions = new LinkedList<Session>();
-
+	
 	@Override
 	public boolean isListener() {return true;}
 	@Override
@@ -74,16 +76,18 @@ public class ModuleDCC extends Module {
 		DccChat chat = event.getChat();
 		if (!isController(event.getBot(),chat.getUser()))
 			return;
-		Session session = new Session(event.getBot().getDccManager(),chat);
+		Session session = new Session(event.getBot().getDccManager(),chat,event.getBot());
 		new Thread(session,"DCC - "+chat.getUser().getNick()).start();
 	}
 	
 	public class Session extends Program {
-		
+		private final PircBotX bot;
 		private final DccManager manager;
-		public Session(DccManager manager, DccChat chat) {
+		
+		public Session(DccManager manager, DccChat chat, PircBotX bot) {
 			super(chat);
 			this.manager = manager;
+			this.bot = bot;
 		}
 		
 		@Override
@@ -119,7 +123,7 @@ public class ModuleDCC extends Module {
 				String run = tokenizer.nextToken();
 				if (programs.containsKey(run)) {
 					ProgramFactory factory = programs.get(run);
-					Program program = factory.start(chat);
+					Program program = factory.start(chat,bot);
 					program.onStart();
 					program.run();
 				}
@@ -136,6 +140,32 @@ public class ModuleDCC extends Module {
 					sb.append(iter.next());
 				}
 				chat.sendLine(sb.toString());
+			} else if (cmd.contentEquals("connect")) {
+				if (!bot.isConnected()) {
+					try {
+						System.out.print("Connecting ");
+						System.out.println(bot.getName());
+						chat.sendLine("Connecting ".concat(bot.getName()));
+						Thread.sleep(10000);
+						
+						if (MultiChannel.connect(bot))
+							MultiChannel.join(Collections.singletonList(bot),Data.channels.toArray(new String[0]));
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					chat.sendLine("Connected!");
+				}
+				else {
+					chat.sendLine("Already connected! Use `disconnect` first");
+				}
+			} else if (cmd.contentEquals("disconnect")) {
+				if (bot.isConnected()) {
+					bot.disconnect();
+					chat.sendLine("Disconnected!");
+				}
+				else {
+					chat.sendLine("Already disconnected!");
+				}
 			}
 			return true;
 		}
@@ -176,15 +206,22 @@ public class ModuleDCC extends Module {
 	
 	public static class LoggerFactory implements ProgramFactory {
 		@Override
-		public Logger start(DccChat chat) {
-			return new Logger(chat);
+		public Logger start(DccChat chat,PircBotX bot) {
+			return new Logger(chat,bot);
+		}
+
+		@Override
+		public Program start(DccChat chat) {
+			return null;
 		}
 	}
 	
 	public static class Logger extends Program implements ILogger {
+		private PircBotX bot;
 		public String name() {return "logger";}
-		public Logger(DccChat chat) {
+		public Logger(DccChat chat,PircBotX bot) {
 			super(chat);
+			this.bot = bot;
 		}
 		
 		@Override
@@ -201,6 +238,34 @@ public class ModuleDCC extends Module {
 		
 		@Override
 		public boolean handleLine(String line) throws IOException {
+			StringBuilder sb = new StringBuilder();
+			StringTokenizer tokenizer = new StringTokenizer(line);
+			String cmd = tokenizer.nextToken();
+			
+			if (cmd.contentEquals("say") && tokenizer.hasMoreTokens()) {
+				String target = tokenizer.nextToken();
+				sb.append("PRIVMSG ");
+				sb.append(target);
+				sb.append(" :");
+				while (tokenizer.hasMoreTokens()) {
+					sb.append(tokenizer.nextToken());
+					sb.append(" ");
+				}
+				bot.sendRawLine(sb.toString());
+			} else if (cmd.contentEquals("action") && tokenizer.hasMoreTokens()) {
+				String target = tokenizer.nextToken();sb.append("PRIVMSG ");
+				sb.append(target);
+				sb.append(" :\1ACTION ");
+				
+				while (tokenizer.hasMoreTokens()) {
+					sb.append(tokenizer.nextToken());
+					sb.append(" ");
+				}
+				sb.append("\1");
+				bot.sendRawLine(sb.toString());
+			} else if (cmd.contentEquals("help")) {
+				chat.sendLine("Commands available: quit, say, action");
+			}
 			return true;
 		}
 
@@ -213,6 +278,11 @@ public class ModuleDCC extends Module {
 	public static class SQLFactory implements ProgramFactory {
 		@Override
 		public SQLConsole start(DccChat chat) {
+			return new SQLConsole(chat);
+		}
+
+		@Override
+		public Program start(DccChat chat, PircBotX bot) {
 			return new SQLConsole(chat);
 		}
 	}

@@ -56,7 +56,7 @@ public class ModuleSamantha extends Module  {
 		if (args.length < 3)
 			return false;
 		for (int i = 1; i < args.length - 1; i++) {
-			if (args[i].equalsIgnoreCase("ass")) {
+			if (args[i].equalsIgnoreCase("SSSS")) {
 				Shocky.sendChannel(event.getBot(),event.getChannel(),String.format("%s %s-%s", args[i-1],args[i],args[i+1]));
 				return true;
 			}
@@ -68,7 +68,7 @@ public class ModuleSamantha extends Module  {
 		if (args.length != 2)
 			return false;
 		if (args[0].equalsIgnoreCase("i'm")||args[0].equalsIgnoreCase("im")) {
-			Shocky.sendChannel(event.getBot(),event.getChannel(),String.format("YOU'RE %s? feel these nipples!", args[1]));
+			Shocky.sendChannel(event.getBot(),event.getChannel(),String.format("YOU'RE %s? What about me?", args[1].toUpperCase()));
 			return true;
 		}
 		return false;

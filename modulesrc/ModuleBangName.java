@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import pl.shockah.StringTools;
 import pl.shockah.shocky.Module;
@@ -30,6 +31,7 @@ public class ModuleBangName extends Module {
 		try {
 			SQL.raw("CREATE TABLE IF NOT EXISTS bangnames (gid INTEGER PRIMARY KEY AUTOINCREMENT, name text NOT NULL, channel text NOT NULL, bang text, removed integer(1) not null default 0, timestamp BIG INTEGER(20) NOT NULL);");
 			SQL.raw("CREATE TABLE IF NOT EXISTS bangaliases (name text not null, alias text not null, l_alias text not null, main integer(1) not null default 1, removed integer(1) not null default 0, timestamp big integer(20) not null);");
+			SQL.raw("CREATE TABLE IF NOT EXISTS bangprefixes (name text not null, text text not null, removed integer(1) not null default 0, timestamp big integer(20) not null);");
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
@@ -54,7 +56,8 @@ public class ModuleBangName extends Module {
 		Integer ret = 0;
 		ConnStatResultSet csrs = null;
 		ResultSet rs = null;
-		name = getAlias(name);
+		if (name != null)
+			name = getAliasedName(name);
 		try{
 			QuerySelect q = new QuerySelect(SQL.getTable("bangnames"));
 			
@@ -79,7 +82,9 @@ public class ModuleBangName extends Module {
 			try {
 				if (rs != null && !rs.isClosed())
 					rs.close();
-				csrs.c.close();
+				if (csrs != null)
+					if (csrs.c != null && !csrs.c.isClosed())
+						csrs.c.close();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -92,10 +97,12 @@ public class ModuleBangName extends Module {
 		Integer num = 0;
 		ConnStatResultSet csrs = null;
 		ResultSet rs = null;
-		name = getAlias(name);
+		if (name != null)
+			name = getAliasedName(name);
 		try{
 			QuerySelect q = new QuerySelect(SQL.getTable("bangnames"));
 			
+			if (name != null)
 			q.addCriterions(new CriterionString("name",Operation.Equals,name));
 			if (channel != null)
 				q.addCriterions(new CriterionString("channel", Operation.Equals, channel));
@@ -119,7 +126,9 @@ public class ModuleBangName extends Module {
 			try {
 				if (rs != null && !rs.isClosed())
 					rs.close();
-				csrs.c.close();
+				if (csrs != null)
+					if (csrs.c != null && !csrs.c.isClosed())
+						csrs.c.close();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -131,7 +140,8 @@ public class ModuleBangName extends Module {
 		BangName ret = null;
 		ConnStatResultSet csrs = null;
 		ResultSet rs = null;
-		name = getAlias(name);
+		if (name != null)
+			name = getAliasedName(name);
 		try{
 			QuerySelect q = new QuerySelect(SQL.getTable("bangnames"));
 			if (name != null)
@@ -152,7 +162,7 @@ public class ModuleBangName extends Module {
 			rs = csrs.rs;
 			if (rs != null){
 				if (rs.next()) {
-					ret = new BangName(rs.getString("name"),rs.getString("bang"), rs.getInt("gid"), rs.getLong("timestamp"));
+					ret = new BangName(rs.getString("name"),rs.getString("bang"), rs.getString("channel"), rs.getInt("gid"), rs.getLong("timestamp"));
 				}
 			}
 		}
@@ -163,7 +173,8 @@ public class ModuleBangName extends Module {
 			try {
 				if (rs != null && !rs.isClosed())
 					rs.close();
-				csrs.c.close();
+				if (csrs.c != null && !csrs.c.isClosed())
+					csrs.c.close();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -172,7 +183,8 @@ public class ModuleBangName extends Module {
 	}
 	
 	void insertBang(String channel, String name, String quote) {
-		name = getAlias(name);
+		if (name != null)
+			name = getAliasedName(name);
 		try {
 			QueryInsert qi = new QueryInsert(SQL.getTable("bangnames"));
 			qi.add("channel",Wildcard.blank);
@@ -220,7 +232,7 @@ public class ModuleBangName extends Module {
 		return ret;
 	}
 	
-	String getAlias(String nick) {
+	String getAliasedName(String nick) {
 		String ret = nick;
 		ConnStatResultSet csrs = null;
 		ResultSet rs = null;
@@ -246,7 +258,9 @@ public class ModuleBangName extends Module {
 			try {
 				if (rs != null && !rs.isClosed())
 					rs.close();
-				csrs.c.close();
+				if (csrs != null)
+					if (csrs.c != null && !csrs.c.isClosed())
+						csrs.c.close();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -281,7 +295,9 @@ public class ModuleBangName extends Module {
 			try {
 				if (rs != null && !rs.isClosed())
 					rs.close();
-				csrs.c.close();
+				if (csrs != null)
+					if (csrs.c != null && !csrs.c.isClosed())
+						csrs.c.close();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -343,7 +359,9 @@ public class ModuleBangName extends Module {
 				try {
 				if (rs != null && !rs.isClosed())
 					rs.close();
-				csrs.c.close();
+				if (csrs != null)
+					if (csrs.c != null && !csrs.c.isClosed())
+						csrs.c.close();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -364,7 +382,83 @@ public class ModuleBangName extends Module {
 			e.printStackTrace();
 		}
 	}
-
+	
+	void setPrefix(String name, String text) {
+		name = getAliasedName(name);
+		if (getPrefix(name) == (getMainAlias(name) + ' '))
+			removePrefix(name);
+		try {
+			QueryInsert qi = new QueryInsert(SQL.getTable("bangprefixes"));
+			qi.add("text",Wildcard.blank);
+			qi.add("name",Wildcard.blank);
+			qi.add("timestamp",Wildcard.blank);
+			
+			Connection tmpc = SQL.getSQLConnection();
+			PreparedStatement p = tmpc.prepareStatement(qi.getSQLQuery());
+			synchronized (p) {
+				p.setString(1, text);
+				p.setString(2, name.toLowerCase());
+				p.setLong(3, System.currentTimeMillis() / 1000L);
+				p.execute();
+			}
+			p.close();
+			tmpc.close();
+		} catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	void removePrefix(String name) {
+		name = getAliasedName(name);
+		try{
+			QueryUpdate qu = new QueryUpdate(SQL.getTable("bangprefixes"));
+			qu.addCriterions(new CriterionNumber("removed", Operation.Equals, 0));
+			qu.addCriterions(new CriterionString("name", Operation.Equals, name.toLowerCase()));
+			qu.set("removed", 1);
+			SQL.update(qu);
+		} catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	String getPrefix(String name) {
+		name = getAliasedName(name);
+		String ret = getMainAlias(name) + ' ' ;
+		ConnStatResultSet csrs = null;
+		ResultSet rs = null;
+		try{
+			QuerySelect q = new QuerySelect(SQL.getTable("bangprefixes"));
+			q.addCriterions(new CriterionString("name",Operation.Equals,name.toLowerCase()));
+			q.addCriterions(new CriterionNumber("removed", Operation.Equals,0));
+			q.addOrder("timestamp", false);
+			q.setLimitCount(1);
+			
+			csrs = SQL.select(q,false);
+			rs = csrs.rs;
+			if (rs != null){
+				if (rs.next()) {
+					ret = rs.getString("text");
+				}
+			}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		} finally {
+				try {
+				if (rs != null && !rs.isClosed())
+					rs.close();
+				if (csrs != null)
+					if (csrs.c != null && !csrs.c.isClosed())
+						csrs.c.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return ret;
+	}
 	//END
 	
 	public class CmdBangName extends Command {
@@ -415,21 +509,27 @@ public class ModuleBangName extends Module {
 			aNick = aNick.toLowerCase();
 
 			Integer bamount = getBangsAmount(aChannel,aNick);	
-			if (bamount == 0) {
+			if (bamount == 0 && !aNick.toLowerCase().equals("gid")) {
 				callback.append("No quotes found");
 				return;
 			}
-			
-			BangName bang = selectBang(aChannel,aNick,aId);
+			if (aId == null) aId = new Random().nextInt(bamount+1);
+			BangName bang;
+			if (aNick.toLowerCase().equals("gid"))
+				bang = selectBang(null,null,aId);
+			else
+				bang = selectBang(aChannel,aNick,aId);
 			
 			String quote = Utils.mungeAllNicks(params.channel, 0, bang.quote);
-			callback.append(getMainAlias(bang.nick))
-			.append(' ')
+			callback.append(getPrefix(bang.nick))
 			.append(quote)
 			.append(' ')
-			.append('(')
-			.append(bang.gid)
-			.append(')');
+			.append('[')
+			.append(bang.gid);
+			if (aNick.toLowerCase().equals("gid"))
+				callback.append('|').append(bang.nick);
+			if (!bang.channel.toLowerCase().equals(params.channel.getName().toLowerCase()))
+			callback.append(']');
 		}
 	}
 	
@@ -572,6 +672,8 @@ public class ModuleBangName extends Module {
 			callback.type = EType.Notice;
 			
 			String login = Shocky.getLogin(params.sender);
+			String alias = "";
+			String name = login.toLowerCase();
 			boolean loggedIn = login != null && !login.isEmpty();
 			
 			if (loggedIn == false) {
@@ -583,27 +685,32 @@ public class ModuleBangName extends Module {
 			if (params.countParams() > 0){
 				arg1 = params.nextParam();
 				cmd_s = this.commands.containsKey(arg1) ? this.commands.get(arg1) : 1;
-			} else
-				cmd_s = 3;
-
-			String alias = "";
-			String name = login.toLowerCase();
-			switch (cmd_s) {
-				//Add
-				case 1:
+				if (cmd_s == 1) {
 					if (!this.commands.containsKey(arg1) && arg1 != "") {
 						alias = arg1;
 						if (params.countParams() > 0)
-							name = params.nextParam().toLowerCase();
+								name = params.nextParam().toLowerCase();
+						if (!name.contains(alias.substring(0, 3).toLowerCase())) { //TODO: add override
+							callback.append("First three letters of alias are not in your login, listing aliases for ").append(alias).append("\n");
+							cmd_s = 3;
+						}
 					}else{
 						alias = params.nextParam();
 						if (params.countParams() > 0)
 							name = params.nextParam().toLowerCase();
 					}
+					
+				}
+			} else
+				cmd_s = 3;
+			
+			switch (cmd_s) {
+				//Add
+				case 1:
 					if (!name.equals(login.toLowerCase())) {
 						params.checkController("You must be a controller to add aliases to other people.");
 					}
-					if (getAliases(name).containsValue(alias)) {
+					if (getAliases(name).containsValue(alias) || getAliasedName(alias)!=alias) {
 						callback.append("Alias already exists.");
 						return;
 					}
@@ -626,7 +733,7 @@ public class ModuleBangName extends Module {
 				case 3:
 					if (!this.commands.containsKey(arg1) && arg1 != "")
 						name = arg1;
-					else if (params.countParams() > 0)
+					else if (params.countParams() > 0 && name != login.toLowerCase())
 						name = params.nextParam();
 					
 					callback.append("Aliases");
@@ -646,13 +753,15 @@ public class ModuleBangName extends Module {
 	
 	public class BangName {
 		public Long timestamp;
+		public String channel;
 		public String nick;
 		public String quote;
 		public Integer gid;
 		
-		public BangName(String string, String quote, Integer gid, Long timestamp) {
+		public BangName(String string, String quote, String channel, Integer gid, Long timestamp) {
 			this.nick = string;
 			this.quote = quote;
+			this.channel = channel;
 			this.gid = gid;
 			this.timestamp = timestamp;
 		}
