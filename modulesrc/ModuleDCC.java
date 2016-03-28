@@ -1,5 +1,11 @@
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -48,6 +54,7 @@ public class ModuleDCC extends Module {
 	public void onEnable(File dir) {
 		programs.put("logger", new LoggerFactory());
 		programs.put("sql", new SQLFactory());
+		programs.put("cat", new CatFactory());
 	}
 	@Override
 	public void onDisable() {
@@ -128,7 +135,7 @@ public class ModuleDCC extends Module {
 					program.run();
 				}
 			} else if (cmd.contentEquals("help")) {
-				chat.sendLine("Commands available: run, help");
+				chat.sendLine("Commands available: run, help, connect, disconnect");
 				StringBuilder sb = new StringBuilder("Programs available: ");
 				List<String> names = new LinkedList<String>(programs.keySet());
 				Collections.sort(names);
@@ -343,6 +350,70 @@ public class ModuleDCC extends Module {
 					set.close();
 				if (statement != null && !statement.isClosed())
 					statement.close();
+			}
+		}
+	}
+	
+	public static class CatFactory implements ProgramFactory {
+		@Override
+		public CatProgram start(DccChat chat,PircBotX bot) {
+			return new CatProgram(chat);
+		}
+
+		@Override
+		public CatProgram start(DccChat chat) {
+			return new CatProgram(chat);
+		}
+	}
+	
+	public static class CatProgram extends Program {
+		public CatProgram(DccChat chat) {
+			super(chat);
+		}
+
+		@Override
+		public String name() {
+			return "cat";
+		}
+
+		@Override
+		public boolean handleLine(String line) throws IOException {
+			if (line.toLowerCase().startsWith("ls")) {
+				try {
+					StringTokenizer tokenizer = new StringTokenizer(line);
+					tokenizer.nextToken();
+					Path path = Paths.get(tokenizer.nextToken());
+					try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+						int i = 0;
+						StringBuilder sb = new StringBuilder();
+					    for (Path file : stream) {
+					    	i++;
+					    	if (i>5) {i=0; sb.append("\n");}
+					    	sb.append(file.getFileName());
+					    	sb.append("  ");
+					    }
+					    chat.sendLine(sb.toString());
+					}
+				} catch(Exception e) {
+					chat.sendLine(e.getMessage());
+				}
+			    return true;
+			} else {
+			try {
+				BufferedReader br = new BufferedReader(new FileReader(line));
+				try {
+					String bline = null;
+					while ((bline = br.readLine()) != null) {
+						chat.sendLine(bline);
+					}
+				} finally {
+					br.close();
+				}
+				return true;
+			} catch (Exception e) {
+				chat.sendLine(e.getMessage());
+			}
+			return true;
 			}
 		}
 	}

@@ -1,30 +1,18 @@
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TreeMap;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.OneArgFunction;
-import org.luaj.vm2.lib.ZeroArgFunction;
 import org.pircbotx.Channel;
 import org.pircbotx.PircBotX;
 import org.pircbotx.ShockyBot;
@@ -37,6 +25,7 @@ import pl.shockah.shocky.Shocky;
 import pl.shockah.shocky.Utils;
 import pl.shockah.shocky.cmds.Command;
 import pl.shockah.shocky.interfaces.ILua;
+import pl.shockah.shocky.interfaces.IPaste;
 import pl.shockah.shocky.sql.ConnStatResultSet;
 import pl.shockah.shocky.sql.CriterionNumber;
 import pl.shockah.shocky.sql.Criterion.Operation;
@@ -47,13 +36,12 @@ import pl.shockah.shocky.sql.QueryUpdate;
 import pl.shockah.shocky.sql.SQL;
 import pl.shockah.shocky.sql.Wildcard;
 
-@SuppressWarnings("unused")
-public class ModuleIdleRPG extends Module /*implements ILua*/ {
+public class ModuleIdleRPG extends Module implements ILua {
 	public static DecimalFormat formatXP = new DecimalFormat("###,###", new DecimalFormatSymbols(Locale.ENGLISH));
 	public static DecimalFormat formatXPPercent = new DecimalFormat("###,###.#", new DecimalFormatSymbols(Locale.ENGLISH));
-
+	public static final String fmname = "idlerpg";
 	public String name() {
-		return "idlerpg";
+		return fmname;
 	}
 
 	public boolean isListener() {
@@ -67,7 +55,7 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 		if (!Data.protectedKeys.contains("idlerpg-channel"))
 			Data.protectedKeys.addAll(Arrays.asList(new String[] {"idlerpg-channel", "idlerpg-announce", "idlerpg-leaderboards-print" }));
 		try {
-			SQL.raw("CREATE TABLE IF NOT EXISTS idlerpg (name text NOT NULL, level INTEGER NOT NULL, xp BIG INTEGER(20) NOT NULL, lastupdate BIG INTEGER(20) NOT NULL);");
+			SQL.raw("idlerpg","CREATE TABLE IF NOT EXISTS idlerpg (name text NOT NULL, level INTEGER NOT NULL, xp BIG INTEGER(20) NOT NULL, lastupdate BIG INTEGER(20) NOT NULL);");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -81,7 +69,7 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 			QuerySelect q = new QuerySelect(SQL.getTable("idlerpg"));
 			q.addCriterions(new CriterionString("name",Operation.Equals,identify));
 			q.setLimitCount(1);
-			csrs = SQL.select(q,false);
+			csrs = SQL.select(q,false,fmname);
 			rs = csrs.rs;
 			if (rs != null){
 				if (rs.next()) {
@@ -117,7 +105,7 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 				qu.set("level", player.level);
 				qu.set("xp", player.xp);
 				qu.set("lastupdate", player.lastUpdate);
-				SQL.update(qu);
+				SQL.update(qu,fmname);
 			}
 			else {
 				QueryInsert qi = new QueryInsert(SQL.getTable("idlerpg"));
@@ -126,7 +114,7 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 				qi.add("xp",Wildcard.blank);
 				qi.add("lastupdate",Wildcard.blank);
 				
-				Connection tmpc = SQL.getSQLConnection();
+				Connection tmpc = SQL.getSQLConnection(fmname);
 				PreparedStatement p = tmpc.prepareStatement(qi.getSQLQuery());
 				synchronized (p) {
 					p.setString(1, identify);
@@ -250,7 +238,7 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 				q.addOrder("level",false);
 				q.addOrder("xp",false);
 				//q.setLimitCount(maxPrint);
-				csrs = SQL.select(q,false);
+				csrs = SQL.select(q,false,"idlerpg");
 				rs = csrs.rs;
 				if (rs != null){
 					while(rs.next()) {
@@ -283,9 +271,23 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 			}
 			
 			if (i > maxPrint) {
-				String url = Utils.paste(paste);
-				if ((url != null) && (!url.isEmpty()))
-					print.append(" | Full leaderboards: ").append(url);
+				try{
+					IPaste p = (IPaste) Module.getModule("paste");
+					if (p!=null){
+						String url = p.paste(paste);
+						if (url != null)
+							if  (!url.isEmpty())
+								print.append(" | Full leaderboards: ").append(url);
+							else 
+								print.append(" | Paste failed: url is empty");
+						else
+							print.append(" | Paste failed: url is null");
+					} else
+						print.append(" | Paste module not loaded");
+				}
+				catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 			send(ev, Utils.mungeAllNicks(ev.getChannel(), 0, print, ev.getUser()));
 			//for (Player p : this.players.values())
@@ -461,10 +463,10 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 		}
 	}
 	
-	/*public LuaValue getPlayerTable(String name) {
-		if (!players.containsKey(name))
+	public LuaValue getPlayerTable(String name) {
+		Player player = GetPlayerFromSQL(name);
+		if (player==null)
 			return LuaValue.NIL;
-		Player player = players.get(name);
 		player.update(null);
 		return getPlayerTable(player);
 	}
@@ -487,7 +489,7 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 		}
 	}
 	
-	public class LeaderboardFunction extends ZeroArgFunction {
+	/*public class LeaderboardFunction extends ZeroArgFunction {
 
 		@Override
 		public LuaValue call() {
@@ -503,7 +505,7 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 				t.rawset(i+1, getPlayerTable(list.get(i)));
 			return t;
 		}
-	}
+	}*/
 
 	@Override
 	public void setupLua(LuaTable env) {
@@ -515,7 +517,7 @@ public class ModuleIdleRPG extends Module /*implements ILua*/ {
 		}
 		LuaTable t = new LuaTable();
 		t.rawset("status", new StatusFunction());
-		t.rawset("leaders", new LeaderboardFunction());
+		//t.rawset("leaders", new LeaderboardFunction());
 		env.set("idlerpg", t);
-	}*/
+	}
 }

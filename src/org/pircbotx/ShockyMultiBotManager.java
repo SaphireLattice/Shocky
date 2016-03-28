@@ -13,7 +13,7 @@ public class ShockyMultiBotManager extends MultiBotManager {
 	}
 	
     @SuppressWarnings("unchecked")
-	public PircBotX createBot(String hostname, int port, String password, SocketFactory socketFactory)
+	public BotBuilder createBot(String hostname, int port, String password, SocketFactory socketFactory)
     {
     	ShockyBot bot = new ShockyBot();
         bot.setListenerManager(listenerManager);
@@ -26,8 +26,10 @@ public class ShockyMultiBotManager extends MultiBotManager {
         bot.setEncoding(encoding);
         bot.setDccInetAddress(dcciNetAddress);
         bot.setDccPorts(dccports);
-        bots.add(new BotEntry(bot, hostname, port, password, socketFactory));
-        return bot;
+        
+        BotBuilder builder = new BotBuilder(bot);
+		bots.add(new BotEntry(bot, hostname, port, password, socketFactory, builder));
+		return builder;
     }
 
 }

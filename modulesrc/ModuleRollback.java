@@ -15,14 +15,14 @@ import org.pircbotx.hooks.events.*;
 import pl.shockah.*;
 import pl.shockah.shocky.Data;
 import pl.shockah.shocky.Module;
-import pl.shockah.shocky.Utils;
-import pl.shockah.shocky.WebServer;
 import pl.shockah.shocky.cmds.Command;
 import pl.shockah.shocky.cmds.CommandCallback;
 import pl.shockah.shocky.cmds.Parameters;
 import pl.shockah.shocky.events.*;
 import pl.shockah.shocky.interfaces.IRollback;
+import pl.shockah.shocky.interfaces.IWebServer;
 import pl.shockah.shocky.interfaces.ILinePredicate;
+import pl.shockah.shocky.interfaces.IPaste;
 import pl.shockah.shocky.lines.*;
 import pl.shockah.shocky.sql.*;
 import pl.shockah.shocky.sql.Criterion.Operation;
@@ -390,12 +390,32 @@ public class ModuleRollback extends Module implements IRollback {
 		}
 		
 		public String getLink(ArrayList<Line> lines, boolean withChannel) {
+			IWebServer ws = null;
+			try {
+				ws = (IWebServer) Module.getModule("webserver");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			StringBuilder sb = new StringBuilder();
 			Line.setWithChannels(withChannel);
-			appendLines(sb,lines,!WebServer.exists());
+			if (ws!=null)
+				appendLines(sb, lines, !ws.exists());
+			else
+				appendLines(sb, lines, false);
 			Line.setWithChannels(false);
 			
-			String link = Utils.paste(sb);
+
+			String link = null;
+			try {
+				IPaste p = (IPaste) Module.getModule("paste");
+				if (!(p==null)){
+					link = p.paste(sb);
+				} else {
+					return "Module 'paste' is not loaded";
+				}
+			} catch (Exception e){
+				e.printStackTrace();
+			}
 			if (link != null)
 				return link;
 			return "Failed with all services";

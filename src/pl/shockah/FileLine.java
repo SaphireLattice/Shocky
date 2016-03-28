@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.nio.file.Files;
 import java.util.ArrayList;
 
 public class FileLine {
@@ -40,8 +41,10 @@ public class FileLine {
 	public static void write(File file, ArrayList<String> lines) {
 		File temp = null;
 		try {
+			
+			
 			try {
-				temp = File.createTempFile("shocky", ".tmp");
+				temp = File.createTempFile(String.join("","shocky.",file.getName()), ".tmp");
 			} catch (IOException e1) {
 				throw new RuntimeException(e1);
 			}
@@ -58,11 +61,15 @@ public class FileLine {
 			
 			if (file.exists())
 				file.delete();
-			temp.renameTo(file);
+			Files.move(temp.toPath(), file.toPath());
+//			boolean success = temp.renameTo(file);
+//			if (!success) {
+//				throw new IOException(String.format("File \"%s\" not renamed to \"%s\"!", temp.getAbsolutePath(),file.getAbsolutePath() ));
+//			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			if (temp != null && temp.exists())
+			if (temp != null && temp.exists() && file.exists())
 				temp.delete();
 		}
 	}

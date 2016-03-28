@@ -62,6 +62,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 	private static final String getChannelFactoidHash = "getChannelFactoid";
 	private static final String getFactoidForgetHash = "getFactoidForget";
 	private static final String getChannelFactoidForgetHash = "getChannelFactoidForget";
+	private static final String fmname = "factoid";
 	
 	public Map<String,FactoidRegistry> factoidRegistry = new HashMap<String,FactoidRegistry>();
 	public static final File registryDirectory = new File("data", "factoid").getAbsoluteFile();
@@ -86,7 +87,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		Data.protectedKeys.add("php-url");
 		Data.protectedKeys.add("python-url");
 
-		SQL.raw("CREATE TABLE IF NOT EXISTS factoid (id INTEGER PRIMARY KEY AUTOINCREMENT ,channel varchar(50) DEFAULT NULL,factoid text NOT NULL,author text NOT NULL,rawtext text NOT NULL,stamp unsigned int(10) NOT NULL,locked unsigned int(1) NOT NULL DEFAULT '0',forgotten unsigned int(1) NOT NULL DEFAULT '0');");
+		SQL.raw(fmname,"CREATE TABLE IF NOT EXISTS factoid (id INTEGER PRIMARY KEY AUTOINCREMENT ,channel varchar(50) DEFAULT NULL,factoid text NOT NULL,author text NOT NULL,rawtext text NOT NULL,stamp unsigned int(10) NOT NULL,locked unsigned int(1) NOT NULL DEFAULT '0',forgotten unsigned int(1) NOT NULL DEFAULT '0');");
 				//+ SQL.getTable("factoid"
 				//+ " (id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,channel varchar(50) DEFAULT NULL,factoid text NOT NULL,author text NOT NULL,rawtext text NOT NULL,stamp int(10) unsigned NOT NULL,locked int(1) unsigned NOT NULL DEFAULT '0',forgotten int(1) unsigned NOT NULL DEFAULT '0',PRIMARY KEY (id),INDEX channel (channel)) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
 
@@ -938,7 +939,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		ResultSet j;
 		boolean hasChannel = channel != null;
 		try {
-			Connection tmpc = SQL.getSQLConnection();
+			Connection tmpc = SQL.getSQLConnection(fmname);
 			PreparedStatement p = prepareStatement(cache, hasChannel, false, tmpc);
 			synchronized (p) {
 				int i = 1;
@@ -970,7 +971,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		ResultSet j;
 		boolean hasChannel = (channel != null);
 		try {
-			Connection tmpc = SQL.getSQLConnection();
+			Connection tmpc = SQL.getSQLConnection(fmname);
 			PreparedStatement p = prepareStatement(cache, hasChannel, true, tmpc);
 			synchronized (p) {
 				int i = 1;
@@ -1002,7 +1003,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		ResultSet j;
 		boolean hasChannel = (channel != null);
 		try {
-			Connection tmpc = SQL.getSQLConnection();
+			Connection tmpc = SQL.getSQLConnection(fmname);
 			PreparedStatement p = prepareStatement(cache, hasChannel, false, tmpc);
 			synchronized (p) {
 				int i = 1;
@@ -1033,7 +1034,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		ResultSet j;
 		boolean hasChannel = (channel != null);
 		try {
-			Connection tmpc = SQL.getSQLConnection();
+			Connection tmpc = SQL.getSQLConnection(fmname);
 			PreparedStatement p = prepareStatement(cache, hasChannel, true, tmpc);
 			synchronized (p) {
 				int i = 1;
@@ -1066,7 +1067,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		QueryUpdate q = new QueryUpdate(SQL.getTable("factoid"));
 		q.addCriterions(new CriterionNumber("id", CriterionNumber.Operation.Equals, f.id));
 		q.set("forgotten", forget ? 1 : 0);
-		SQL.update(q);
+		SQL.update(q,fmname);
 		return true;
 	}
 
@@ -1173,7 +1174,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 			q.add("author", params.sender.getNick());
 			q.add("rawtext", rem);
 			q.add("stamp", System.currentTimeMillis() / 1000);
-			SQL.insert(q);
+			SQL.insert(q,fmname);
 			callback.append("Done.");
 		}
 	}

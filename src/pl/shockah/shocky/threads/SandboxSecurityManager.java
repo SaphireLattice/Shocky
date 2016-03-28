@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.Permissions;
-import java.util.PropertyPermission;
-
 import sun.security.util.SecurityConstants;
 
 public class SandboxSecurityManager extends SecurityManager 
@@ -41,10 +39,10 @@ public class SandboxSecurityManager extends SecurityManager
 		
 		this.readonlyFiles = readonlyFiles;
 		allowed.add(new FilePermission(System.getProperty("java.home").replace('\\','/')+"/lib/-","read"));
-		allowed.add(new FilePermission("/usr/lib/jvm/java-8-oracle/jre/lib/security/cacerts","read"));
+		allowed.add(new FilePermission("/usr/lib/jvm/java-8-openjdk/jre/lib/security/cacerts","read"));
+		allowed.add(new FilePermission("/usr/lib/jvm/java-8-openjdk/jre/lib/security/jssecacerts","read"));
 		allowed.add(new FilePermission("./shocky.db","read,write"));
-		allowed.add(new FilePermission("/home/saphire/Shocky","read,write"));
-		allowed.add(new FilePermission("/usr/lib/sqlite3/pcre.so","read,execute"));
+		allowed.add(new FilePermission("./-","read,write"));
 		//String cd = '/'+System.getProperty("user.dir").replace('\\','/');
 		for (int i = 0; i <libs.length; i++) {
 			String lib = libs[i];
@@ -64,9 +62,9 @@ public class SandboxSecurityManager extends SecurityManager
 		
 		allowed.setReadOnly();
 		
-		disallowed.add(new PropertyPermission("*","write"));
+		//disallowed.add(new PropertyPermission("*","write"));
 	
-		disallowed.add(new FilePermission("<<ALL FILES>>" ,"read,write,execute,delete"));
+		//disallowed.add(new FilePermission("<<ALL FILES>>" ,"read,write,execute,delete"));
 		
 		disallowed.add(new RuntimePermission("setSecurityManager"));
 		disallowed.add(new RuntimePermission("shutdownHooks"));
@@ -89,6 +87,7 @@ public class SandboxSecurityManager extends SecurityManager
 		
 		if (disallow) {
 			if (!allow)
+				System.out.println("Not allowed: "+perm.toString());
 				throw new SecurityException("Not allowed: "+perm.toString());
 		}
 	}

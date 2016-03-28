@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.*;
 
 import org.pircbotx.*;
+import org.pircbotx.MultiBotManager.BotBuilder;
 import org.pircbotx.exception.*;
 
 import pl.shockah.Reflection;
@@ -26,25 +27,29 @@ public class MultiChannel {
 	}
 	
 	private static PircBotX createBot() {
-		PircBotX bot = Shocky.getBotManager().createBot(Data.config.getString("main-server"));
-		bot.setVersion(Data.config.getString("main-version"));
-		if (!connect(bot))
-			return null;
-		if (channelPrefixes == null)
-			channelPrefixes = Reflection.getPrivateValue(PircBotX.class,"channelPrefixes",bot);
-		botList.add(bot);
+		PircBotX bot = null;
+		BotBuilder builder = null;
+		try {
+			builder = Shocky.getBotManager().createBot(Data.config.getString("main-server"), Data.config.getInt("main-port"), Data.config.getString("main-pass"), null);
+			bot = builder.getBot();
+			bot.setVersion(Data.config.getString("main-version"));
+			if (!connect(bot))
+				return null;
+			if (channelPrefixes == null)
+				channelPrefixes = Reflection.getPrivateValue(PircBotX.class,"channelPrefixes",bot);
+			botList.add(bot);
+		} catch(Exception e) { e.printStackTrace();}
 		return bot;
 	}
 	
 	public static boolean connect(PircBotX bot) {
 		String server = Data.config.getString("main-server");
+		Integer port = Data.config.getInt("main-port");
+		String pass = Data.config.getString("main-pass");
 		try {
-			bot.connect(server.contentEquals("localhost") ? null : server);
+			bot.connect(server.equalsIgnoreCase("localhost") ? null : server, port, pass);
 			if (!bot.isConnected())
 				return false;
-			
-			startWebServer(bot);
-			
 			if (!Data.config.getString("main-nickservpass").isEmpty())
 				bot.identify(Data.config.getString("main-nickservpass"));
 			return true;
@@ -56,15 +61,6 @@ public class MultiChannel {
 			e.printStackTrace();
 		}
 		return false;
-	}
-	
-	public static void startWebServer(PircBotX bot) {
-		try {
-			if (!WebServer.exists() && WebServer.start("eos.pc-logix.com", 48000)) //bot.getInetAddress().getHostAddress(),8000))
-				System.out.println("--- Shocky web server is running! ---");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 	
 	public static List<String> getBotChannels(PircBotX bot) throws Exception {

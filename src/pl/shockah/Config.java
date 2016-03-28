@@ -138,6 +138,7 @@ public class Config {
 			set(key.trim(),value.trim());
 		}
 	}
+	
 	public void save(File file) {
 		ArrayList<String> lines = new ArrayList<String>();
 		saveSubconfig(lines,"");

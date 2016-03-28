@@ -1,7 +1,6 @@
 package pl.shockah.shocky;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,7 +50,7 @@ public abstract class Module extends ListenerAdapter implements IModule, Compara
 		for (int i = 0; i < loaders.size(); i++) {
 			if (loaders.get(i).accept(source)) {
 				try { module = loaders.get(i).loadModule(source);}
-				catch (NoClassDefFoundError e) { e.printStackTrace(); }
+				catch (Exception e) { e.printStackTrace(); }
 			}
 				
 			if (module != null) {

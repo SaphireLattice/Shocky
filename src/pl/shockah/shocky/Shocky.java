@@ -43,7 +43,6 @@ public class Shocky extends ListenerAdapter {
 		multiBot.getListenerManager().addListener(new Shocky());
 		
 		Module.loadNewModules();
-		Utils.initPasteServices();
 		
 
 		System.out.println("--- Shocky, the IRC bot, up and running! ---");
@@ -98,7 +97,6 @@ public class Shocky extends ListenerAdapter {
 		killMe();
 	}
 	private static void killMe() {
-		WebServer.stop();
 		while (true) {
 			for (PircBotX bot : multiBot.getBots()) if (bot.isConnected()) {
 				try {

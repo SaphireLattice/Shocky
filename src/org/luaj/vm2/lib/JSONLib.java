@@ -82,7 +82,7 @@ public class JSONLib extends VarArgFunction {
 				q.write(post);
 			ret[0] = valueOf(q.readWhole());
 		} catch (Exception e) {
-			//throw new LuaError(e);
+			e.printStackTrace();
 		} finally {
 			if (q == null) 
 				ret[2] = valueOf(url);

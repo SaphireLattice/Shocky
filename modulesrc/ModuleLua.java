@@ -363,6 +363,7 @@ public class ModuleLua extends ScriptModule implements ResourceFinder {
 			output = f.get(30, TimeUnit.SECONDS);
 		} catch (LuaError e) {
 			output = e.getMessage();
+			e.printStackTrace();
 		} catch (TimeoutException e) {
 			output = "Script timed out";
 		} catch (Exception e) {

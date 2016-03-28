@@ -1,10 +1,5 @@
 package pl.shockah.shocky;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,7 +10,7 @@ import org.pircbotx.User;
 import com.sun.net.httpserver.HttpContext;
 
 import pl.shockah.*;
-import pl.shockah.shocky.paste.*;
+import pl.shockah.shocky.interfaces.IWebServer;
 
 public class Utils {
 	public static final Pattern
@@ -31,7 +26,6 @@ public class Utils {
 		flipOriginal =	"!().12345679<>?ABCDEFGJKLMPQRTUVWY[]_abcdefghijklmnpqrtuvwy{},'\"┳",
 		flipReplace =	"¡)(˙⇂ᄅƐㄣϛ9Ɫ6><¿∀ᗺƆᗡƎℲפᒋ丬˥WԀΌᴚ⊥∩ΛMλ][‾ɐqɔpǝɟɓɥıɾʞlɯudbɹʇnʌʍʎ}{',„┻";
 	
-	public static final List<PasteService> services = new LinkedList<PasteService>();
 	public static final Map<String,HttpContext> urls = new HashMap<String,HttpContext>();
 	
 	public static List<String> getAllUrls(String text) {
@@ -46,23 +40,30 @@ public class Utils {
 		return text;
 	}
 	public static String shortenUrl(String url) {
-		if (WebServer.exists())
-		{
-			StringBuilder sb = new StringBuilder(WebServer.getURL());
-			if (url.startsWith(sb.toString()))
-				return url;
-			HttpContext context;
-			synchronized (urls) {
-				if (urls.containsKey(url))
-					context = urls.get(url);
-				else {
-					context = WebServer.addRedirect(url);
-					urls.put(url, context);
-				}
-			}
-			sb.append(context.getPath());
-			return sb.toString();
+		IWebServer ws = null;
+		try {
+			ws = (IWebServer) Module.getModule("webserver");
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
+		if (ws!=null)
+			if (ws.exists())
+			{
+				StringBuilder sb = new StringBuilder(ws.getURL());
+				if (url.startsWith(sb.toString()))
+					return url;
+				HttpContext context;
+				synchronized (urls) {
+					if (urls.containsKey(url))
+						context = urls.get(url);
+					else {
+						context = ws.addRedirect(url);
+						urls.put(url, context);
+					}
+				}
+				sb.append(context.getPath());
+				return sb.toString();
+			}
 		String login = Data.config.getString("main-bitlyuser");
 		String key = Data.config.getString("main-bitlyapikey");
 		if (login==null || key==null)
@@ -78,50 +79,7 @@ public class Utils {
 		return url;
 	}
 	
-	public static void initPasteServices() {
-		String key = null;
-		services.clear();
-		services.add(new ServicePasteKdeOrg());
-		key = Data.config.getString("api-pastebin.com");
-		if (key != null)
-			services.add(new ServicePastebinCom(key));
-		key = Data.config.getString("api-pastebin.ca");
-		if (key != null)
-			services.add(new ServicePastebinCa(key));
-	}
 	
-	public static String paste(CharSequence data) {
-		if (WebServer.exists() && data.length() < 5242880)
-		{
-			File file;
-			try {
-				file = File.createTempFile("shocky_paste", ".txt");
-				file.deleteOnExit();
-				FileOutputStream os = new FileOutputStream(file);
-				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os,Helper.utf8));
-				bw.append(data);
-				bw.close();
-				os.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-				file = null;
-			}
-			
-			if (file != null) {
-				StringBuilder sb = new StringBuilder(WebServer.getURL());
-				HttpContext context = WebServer.addPaste(file);
-				sb.append(context.getPath());
-				return sb.toString();
-			}
-		}
-		String link = null;
-		for (PasteService service : services) {
-			link = service.paste(data);
-			if (link == null) continue;
-			if (link.isEmpty() || link.startsWith("http://")) break;
-		}
-		return link;
-	}
 	
 	public static String mungeAllNicks(Channel channel, int threshold, CharSequence message, User... dontMunge) {
 		String temp = message.toString();
