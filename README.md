@@ -1,6 +1,7 @@
 Shocky
 ======
-Original repository: https://github.com/clone1018/Shocky
+Forked from https://github.com/clone1018/Shocky
+
 Instructions
 -----
 1. ```git clone``` the project

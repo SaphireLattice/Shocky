@@ -12,7 +12,6 @@ public class ShockyMultiBotManager extends MultiBotManager {
 		super(dummyBot);
 	}
 	
-    @SuppressWarnings("unchecked")
 	public BotBuilder createBot(String hostname, int port, String password, SocketFactory socketFactory)
     {
     	ShockyBot bot = new ShockyBot();

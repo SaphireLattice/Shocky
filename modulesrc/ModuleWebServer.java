@@ -25,8 +25,6 @@ import com.sun.net.httpserver.HttpServer;
 
 public class ModuleWebServer extends Module implements IWebServer {
 	private static HttpServer server;
-	private static AtomicInteger redirectID = new AtomicInteger(1);
-	private static AtomicInteger pasteID = new AtomicInteger(1);
 	private Command cmd;
 	private static final String mname = "webserver";
 	private static final String hostname = "reynir.aww.moe";
