@@ -34,7 +34,6 @@ import pl.shockah.shocky.sql.QueryInsert;
 import pl.shockah.shocky.sql.QuerySelect;
 import pl.shockah.shocky.sql.QueryUpdate;
 import pl.shockah.shocky.sql.SQL;
-import pl.shockah.shocky.sql.Wildcard;
 
 public class ModuleIdleRPG extends Module implements ILua {
 	public static DecimalFormat formatXP = new DecimalFormat("###,###", new DecimalFormatSymbols(Locale.ENGLISH));
@@ -109,18 +108,14 @@ public class ModuleIdleRPG extends Module implements ILua {
 			}
 			else {
 				QueryInsert qi = new QueryInsert(SQL.getTable("idlerpg"));
-				qi.add("name",Wildcard.blank);
-				qi.add("level",Wildcard.blank);
-				qi.add("xp",Wildcard.blank);
-				qi.add("lastupdate",Wildcard.blank);
+				qi.add("name", identify);
+				qi.add("level", player.level);
+				qi.add("xp", player.xp);
+				qi.add("lastupdate", player.lastUpdate);
 				
 				Connection tmpc = SQL.getSQLConnection(fmname);
-				PreparedStatement p = tmpc.prepareStatement(qi.getSQLQuery());
+				PreparedStatement p = qi.getSQLQuery(tmpc);
 				synchronized (p) {
-					p.setString(1, identify);
-					p.setInt(2, player.level);
-					p.setInt(3, player.xp);
-					p.setLong(4, player.lastUpdate);
 					p.execute();
 				}
 				p.close();

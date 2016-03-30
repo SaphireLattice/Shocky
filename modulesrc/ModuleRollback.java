@@ -43,10 +43,7 @@ public class ModuleRollback extends Module implements IRollback {
 		TYPE_MESSAGEACTION = 6,
 		TYPE_OTHER = 0;
 	
-	private static final Criterion msgAndActCriterion  = new Criterion(
-			new CriterionNumber("type",Operation.Equals,TYPE_MESSAGE)
-			+ " OR " +
-			new CriterionNumber("type",Operation.Equals,TYPE_ACTION));
+
 	
 	public static void appendLines(StringBuilder sb, ArrayList<Line> lines, boolean encode) {
 		try {
@@ -128,16 +125,13 @@ public class ModuleRollback extends Module implements IRollback {
 		/*String key = line.getClass().getName();*/
 		try {
 			QueryInsert q = new QueryInsert(SQL.getTable("rollback"));
-			q.add("channel",Wildcard.blank);
-			q.add("stamp",Wildcard.blank);
-			line.fillQuery(q, true);
+			q.add("channel", channel);
+			q.add("stamp", System.currentTimeMillis());
+			line.fillQuery(q);
 			
-			p = tmpc.prepareStatement(q.getSQLQuery());
+			p = q.getSQLQuery(tmpc);
 			
 			synchronized (p) {
-				p.setString(1, channel);
-				p.setLong(2, System.currentTimeMillis());
-				line.fillQuery(p, 3);
 				p.execute();
 			}
 			p.close();
@@ -224,8 +218,12 @@ public class ModuleRollback extends Module implements IRollback {
 		if (type != Line.class) {
 			if (intType != TYPE_MESSAGEACTION)
 				q.addCriterions(new CriterionNumber("type",Operation.Equals,intType));
-			else
-				q.addCriterions(msgAndActCriterion);
+			else {
+				CriterionNumber cn1 = new CriterionNumber("type",Operation.Equals,TYPE_MESSAGE);
+				CriterionNumber cn2 = new CriterionNumber("type",Operation.Equals,TYPE_ACTION);
+                cn1.setOR();
+                q.addCriterions(cn1, cn2);
+            }
 		}
 		q.addOrder("stamp",!newest);
 			

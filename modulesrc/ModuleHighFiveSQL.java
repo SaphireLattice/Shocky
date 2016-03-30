@@ -22,12 +22,10 @@ import pl.shockah.shocky.sql.QueryInsert;
 import pl.shockah.shocky.sql.QuerySelect;
 import pl.shockah.shocky.sql.QueryUpdate;
 import pl.shockah.shocky.sql.SQL;
-import pl.shockah.shocky.sql.Wildcard;
 import pl.shockah.shocky.sql.Criterion.Operation;
 import pl.shockah.shocky.sql.CriterionNumber;
 
 public class ModuleHighFiveSQL extends Module implements ILua {
-	//private Config config = new Config();
 	private HashMap<String,User> started = new HashMap<String,User>();
 	private HashMap<String,Long> timers = new HashMap<String,Long>();
 	private static final Pattern pattern = Pattern.compile("(\\s|^)(o/|\\\\o)(\\s|$)", Pattern.CASE_INSENSITIVE);
@@ -109,18 +107,15 @@ public class ModuleHighFiveSQL extends Module implements ILua {
 			}
 			else {
 				QueryInsert qi = new QueryInsert(SQL.getTable("highfive"));
-				qi.add("pair",Wildcard.blank);
-				qi.add("times",Wildcard.blank);
-				qi.add("timestamp",Wildcard.blank);
-				qi.add("identified",Wildcard.blank);
+				qi.add("pair", pa.toString());
+				qi.add("times", pa.times);
+				qi.add("timestamp", pa.timestamp);
+				qi.add("identified", pa.id);
 				
 				Connection tmpc = SQL.getSQLConnection();
-				PreparedStatement p = tmpc.prepareStatement(qi.getSQLQuery());
+				PreparedStatement p = null;
+				p = qi.getSQLQuery(tmpc);
 				synchronized (p) {
-					p.setString(1, pa.toString());
-					p.setInt(2, pa.times);
-					p.setLong(3, pa.timestamp);
-					p.setInt(4, pa.id);
 					p.execute();
 				}
 				p.close();

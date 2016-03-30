@@ -7,7 +7,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.TimeZone;
-
 import pl.shockah.BinBuffer;
 import pl.shockah.shocky.sql.QueryInsert;
 import pl.shockah.shocky.sql.Wildcard;
@@ -61,9 +60,15 @@ public abstract class Line {
 	
 	public abstract boolean containsUser(String user);
 	
+	@Deprecated
 	public void fillQuery(QueryInsert q, boolean prepare) {
 		q.add("type",prepare?Wildcard.blank:getLineID(this));
 	}
+	
+	public void fillQuery(QueryInsert q) {
+		q.add("type",getLineID(this));
+	}
+	
 	
 	public int fillQuery(PreparedStatement p, int arg) throws SQLException {
 		p.setInt(arg++, getLineID(this));

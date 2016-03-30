@@ -8,7 +8,6 @@ import java.util.Date;
 import pl.shockah.BinBuffer;
 import pl.shockah.StringTools;
 import pl.shockah.shocky.sql.QueryInsert;
-import pl.shockah.shocky.sql.Wildcard;
 
 public abstract class LineWithUsers extends Line {
 	public final String[] users;
@@ -48,9 +47,9 @@ public abstract class LineWithUsers extends Line {
 		return contains;
 	}
 	@Override
-	public void fillQuery(QueryInsert q, boolean prepare) {
-		super.fillQuery(q,prepare);
-		q.add("users",prepare?Wildcard.blank:StringTools.implode(users, ";"));
+	public void fillQuery(QueryInsert q) {
+		super.fillQuery(q);
+		q.add("users",StringTools.implode(users, ";"));
 	}
 	
 	public int fillQuery(PreparedStatement p, int arg) throws SQLException {

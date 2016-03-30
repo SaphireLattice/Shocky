@@ -6,7 +6,6 @@ import java.io.OutputStream;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import pl.shockah.Helper;
 import pl.shockah.shocky.Data;

@@ -1,5 +1,6 @@
 package pl.shockah.shocky.sql;
 
+
 public class Wildcard extends Criterion {
 	public static Wildcard blank = new Wildcard();
 	

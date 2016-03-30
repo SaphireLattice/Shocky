@@ -9,7 +9,6 @@ import org.pircbotx.hooks.events.MessageEvent;
 
 import pl.shockah.BinBuffer;
 import pl.shockah.shocky.sql.QueryInsert;
-import pl.shockah.shocky.sql.Wildcard;
 
 public class LineMessage extends LineWithUsers {
 	public final String text;
@@ -41,9 +40,9 @@ public class LineMessage extends LineWithUsers {
 		return "<"+users[0]+"> "+text;
 	}
 	@Override
-	public void fillQuery(QueryInsert q, boolean prepare) {
-		super.fillQuery(q, prepare);
-		q.add("text",prepare?Wildcard.blank:text);
+	public void fillQuery(QueryInsert q) {
+		super.fillQuery(q);
+		q.add("text", text);
 	}
 	
 	public int fillQuery(PreparedStatement p, int arg) throws SQLException {

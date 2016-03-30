@@ -1,5 +1,7 @@
 package pl.shockah.shocky.sql;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -17,7 +19,11 @@ public abstract class Query {
 		
 		return sb.toString();
 	}
+	@Deprecated
 	protected static String getValuesPairClause(Map<String,Object> list) {
+		return getValuesPairClause(list, false);
+	}
+	protected static String getValuesPairClause(Map<String,Object> list, boolean prepare) {
 		StringBuilder sb = new StringBuilder();
 		
 		for (Entry<String, Object> pair : list.entrySet()) {
@@ -25,7 +31,7 @@ public abstract class Query {
 			sb.append(pair.getKey());
 			sb.append('=');
 			Object value = pair.getValue();
-			if (value instanceof Wildcard)
+			if (value instanceof Wildcard || prepare)
 				sb.append('?');
 			else if (value instanceof String)
 				sb.append('\'').append(value.toString().replace("\\","\\\\").replace("'","\\'")).append('\'');
@@ -72,14 +78,27 @@ public abstract class Query {
 		StringBuilder sb = new StringBuilder("WHERE ");
 		
 		int i = 0;
+		boolean wasOR = false;
 		for (Criterion c : list) {
 			if (i > 0) {
-				if (c.useOR)
+				if (wasOR) {
 					sb.append(" OR ");
+				}
 				else
 					sb.append(" AND ");
 			}
-			sb.append(c);
+            if (c.useOR) {
+                sb.append(" ( ");
+            }
+			//sb.append(c);
+			sb.append(c.column).append(c.o).append("?");
+			if (wasOR) {
+				sb.append(" ) ");
+				wasOR = false;
+			}
+			if (c.useOR) {
+				wasOR = true;
+			}
 			i++;
 		}
 		
@@ -87,4 +106,5 @@ public abstract class Query {
 	}
 	
 	public abstract String getSQLQuery();
+	public abstract PreparedStatement getSQLQuery(Connection con);
 }

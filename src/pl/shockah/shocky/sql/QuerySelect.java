@@ -1,9 +1,12 @@
 package pl.shockah.shocky.sql;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
 
 public class QuerySelect extends Query {
 	private final String table;
@@ -19,6 +22,7 @@ public class QuerySelect extends Query {
 	public void addColumns(String... columns) {
 		this.columns.addAll(Arrays.asList(columns));
 	}
+
 	public void addCriterions(Criterion... criterions) {
 		this.criterions.addAll(Arrays.asList(criterions));
 	}
@@ -34,11 +38,40 @@ public class QuerySelect extends Query {
 		setLimitCount(count);
 	}
 	
+	@Deprecated
 	public String getSQLQuery() {
 		String clauseColumns = getColumnsClause(columns);
 		String clauseWhere = getWhereClause(criterions);
 		String clauseOrderBy = getOrderByClause(orderby);
 		String clauseLimit = limitOffset == 0 && limitCount == -1 ? "" : "LIMIT "+(limitOffset != 0 ? ""+limitOffset+"," : "")+limitCount;
 		return "SELECT "+clauseColumns+" FROM "+table+(clauseWhere.isEmpty() ? "" : " "+clauseWhere)+(clauseOrderBy.isEmpty() ? "" : " "+clauseOrderBy)+(clauseLimit.isEmpty() ? "" : " "+clauseLimit);
+	}
+	
+	public PreparedStatement getSQLQuery(Connection con) {
+		String clauseWhere = getWhereClause(criterions);
+		String clauseColumns = getColumnsClause(columns);
+		String clauseOrderBy = getOrderByClause(orderby);
+		String clauseLimit = limitOffset == 0 && limitCount == -1 ? "" : "LIMIT "+(limitOffset != 0 ? ""+limitOffset+"," : "")+limitCount;
+		StringBuilder sb = new StringBuilder("SELECT ");
+		
+		sb.append(clauseColumns)
+		  .append(" FROM ")
+		  .append(table)
+		  .append(clauseWhere.isEmpty() ? "" : " "+clauseWhere)
+		  .append(clauseOrderBy.isEmpty() ? "" : " "+clauseOrderBy)
+		  .append(clauseLimit.isEmpty() ? "" : " "+clauseLimit);
+		
+		PreparedStatement p = null;
+		int i=0;
+		try {
+			p = con.prepareStatement(sb.toString());
+			for (Criterion c : criterions) {
+				i++;
+				p.setObject(i, c.value);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return p;
 	}
 }

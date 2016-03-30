@@ -9,6 +9,7 @@ public class CriterionString extends Criterion {
 	}
 	
 	public CriterionString(String column, Operation o, String value) {
-		super((value == null && o==Operation.Equals ? column+" IS NULL" : value == null && o==Operation.NotEquals ? column+" IS NOT NULL" : column+o+"'"+value.replace("\\","\\\\").replace("'","''")+"'"));
+		super(column, o, value);
+		//super((value == null && o==Operation.Equals ? column+" IS NULL" : value == null && o==Operation.NotEquals ? column+" IS NOT NULL" : column+o+"'"+value.replace("\\","\\\\").replace("'","''")+"'"));
 	}
 }

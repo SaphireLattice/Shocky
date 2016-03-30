@@ -17,13 +17,13 @@ public class SQL {
 	public static Map<String,PreparedStatement> statements = new HashMap<String,PreparedStatement>();
 
 	public static void raw(String query) {execute(query);}
-	public static void raw(String dbname, String query) {execute(dbname, query);}
-	public static ResultSet select(String query) {return executeQuery(query);}
-	public static ResultSet select(QuerySelect query) {return select(query.getSQLQuery());}
-	public static ConnStatResultSet select(QuerySelect query, Boolean close, String dbname) {return executeQuery(query.getSQLQuery(),close,dbname);}
-	public static ConnStatResultSet select(QuerySelect query, Boolean close) {return executeQuery(query.getSQLQuery(),close,"");}
-	public static void delete(QueryDelete query) {execute(query.getSQLQuery());}
-	public static int update(QueryUpdate query, String dbname) {return updateResultSet(query.getSQLQuery(), dbname);}
+	public static void raw(String dbname, String query) {execute(query, "");}
+	public static ResultSet select(QuerySelect query) {return executeQuery(query);}
+	public static ConnStatResultSet select(QuerySelect query, Boolean close, String dbname) {return executeQuery(query,close,dbname);}
+	public static ConnStatResultSet select(QuerySelect query, Boolean close) {return executeQuery(query,close,"");}
+	public static void delete(QueryDelete query) {execute(query, "");}
+	public static void delete(QueryDelete query, String dbname) {execute(query, dbname);}
+	public static int update(QueryUpdate query, String dbname) {return updateResultSet(query, dbname);}
 	public static int update(QueryUpdate query) {return update(query,"");}
 	
 	public static void init() {
@@ -86,7 +86,7 @@ public class SQL {
 		return conn;
 	}
 	
-	public static ResultSet executeQuery(String query) {
+	public static ResultSet executeQuery(Query query) {
 		ConnStatResultSet tmpcsrs = executeQuery(query, true, "");
 		try {
 			tmpcsrs.c.close();
@@ -97,11 +97,11 @@ public class SQL {
 		ResultSet ret = tmpcsrs.rs;
 		return ret;
 	}
-	public static ConnStatResultSet executeQuery(String query, Boolean close, String dbname) {
+	public static ConnStatResultSet executeQuery(Query query, Boolean close, String dbname) {
 		try {
 			Connection c = SQL.getSQLConnection(dbname);
 			Statement s = c.createStatement();
-			ResultSet rs = s.executeQuery(query);
+			ResultSet rs = query.getSQLQuery(c).executeQuery();
 			if(close){
 				s.close();
 				c.close();
@@ -115,12 +115,12 @@ public class SQL {
 	}
 
 	public static void execute(String query) {
-		execute("", query);
+		execute(query, "");
 	}
-	public static void execute(String dbname, String query) {
+	public static void execute(String query, String dbname) {
 		Statement s = null;
 		try {
-			Connection tmpc= getSQLConnection(dbname);
+			Connection tmpc = getSQLConnection(dbname);
 			s = tmpc.createStatement();
 			s.execute(query);
 			s.close();
@@ -130,13 +130,26 @@ public class SQL {
 			System.out.println(query);
 		}
 	}
-	
-	public static int updateResultSet(String query,String dbname) {
+	public static void execute(Query query, String dbname) {
 		Statement s = null;
 		try {
 			Connection tmpc= getSQLConnection(dbname);
 			s = tmpc.createStatement();
-			int tmp = s.executeUpdate(query);
+			s.execute(query.getSQLQuery(tmpc).toString());
+			s.close();
+			tmpc.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			System.out.println(query);
+		}
+	}
+	
+	public static int updateResultSet(Query query,String dbname) {
+		Statement s = null;
+		try {
+			Connection tmpc= getSQLConnection(dbname);
+			s = tmpc.createStatement();
+			int tmp = query.getSQLQuery(tmpc).executeUpdate();
 			s.close();
 			tmpc.close();
 			return tmp;

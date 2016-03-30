@@ -20,7 +20,6 @@ import pl.shockah.shocky.sql.QueryInsert;
 import pl.shockah.shocky.sql.QuerySelect;
 import pl.shockah.shocky.sql.QueryUpdate;
 import pl.shockah.shocky.sql.SQL;
-import pl.shockah.shocky.sql.Wildcard;
 import pl.shockah.shocky.sql.Criterion.Operation;
 
 public class ModuleBangName extends Module {
@@ -187,18 +186,14 @@ public class ModuleBangName extends Module {
 			name = getAliasedName(name);
 		try {
 			QueryInsert qi = new QueryInsert(SQL.getTable("bangnames"));
-			qi.add("channel",Wildcard.blank);
-			qi.add("name",Wildcard.blank);
-			qi.add("bang",Wildcard.blank);
-			qi.add("timestamp",Wildcard.blank);
+			qi.add("channel", channel);
+			qi.add("name", name);
+			qi.add("bang", quote);
+			qi.add("timestamp", System.currentTimeMillis() / 1000L);
 			
 			Connection tmpc = SQL.getSQLConnection();
-			PreparedStatement p = tmpc.prepareStatement(qi.getSQLQuery());
+			PreparedStatement p = qi.getSQLQuery(tmpc);
 			synchronized (p) {
-				p.setString(1, channel);
-				p.setString(2, name);
-				p.setString(3, quote);
-				p.setLong(4, System.currentTimeMillis() / 1000L);
 				p.execute();
 			}
 			p.close();
@@ -310,18 +305,14 @@ public class ModuleBangName extends Module {
 			return;
 		try {
 			QueryInsert qi = new QueryInsert(SQL.getTable("bangaliases"));
-			qi.add("alias",Wildcard.blank);
-			qi.add("l_alias",Wildcard.blank);
-			qi.add("name",Wildcard.blank);
-			qi.add("timestamp",Wildcard.blank);
+			qi.add("alias", target);
+			qi.add("l_alias", target.toLowerCase());
+			qi.add("name", origin.toLowerCase());
+			qi.add("timestamp", System.currentTimeMillis() / 1000L);
 			
 			Connection tmpc = SQL.getSQLConnection();
-			PreparedStatement p = tmpc.prepareStatement(qi.getSQLQuery());
+			PreparedStatement p = qi.getSQLQuery(tmpc);
 			synchronized (p) {
-				p.setString(1, target);
-				p.setString(2, target.toLowerCase());
-				p.setString(3, origin.toLowerCase());
-				p.setLong(4, System.currentTimeMillis() / 1000L);
 				p.execute();
 			}
 			p.close();
@@ -389,16 +380,13 @@ public class ModuleBangName extends Module {
 			removePrefix(name);
 		try {
 			QueryInsert qi = new QueryInsert(SQL.getTable("bangprefixes"));
-			qi.add("text",Wildcard.blank);
-			qi.add("name",Wildcard.blank);
-			qi.add("timestamp",Wildcard.blank);
+			qi.add("text", text);
+			qi.add("name", name.toLowerCase());
+			qi.add("timestamp", System.currentTimeMillis() / 1000L);
 			
 			Connection tmpc = SQL.getSQLConnection();
-			PreparedStatement p = tmpc.prepareStatement(qi.getSQLQuery());
+			PreparedStatement p = qi.getSQLQuery(tmpc);
 			synchronized (p) {
-				p.setString(1, text);
-				p.setString(2, name.toLowerCase());
-				p.setLong(3, System.currentTimeMillis() / 1000L);
 				p.execute();
 			}
 			p.close();
