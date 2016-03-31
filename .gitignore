@@ -37,10 +37,15 @@ nb-configuration.xml
 build.xml
 manifest.mf
 
+#IntelliJ IDEA
+.idea
+
 # Shocky Stuff
 modules/
 data/
 .directory
-shocky.db
+*.db
 shocky.jar
 run.bat
+Shocky.launch
+Shocky.iml
