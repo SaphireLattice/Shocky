@@ -112,7 +112,7 @@ public class ModuleHighFiveSQL extends Module implements ILua {
 				qi.add("timestamp", pa.timestamp);
 				qi.add("identified", pa.id);
 				
-				Connection tmpc = SQL.getSQLConnection();
+				Connection tmpc = SQL.getSQLConnection("highfive");
 				PreparedStatement p = null;
 				p = qi.getSQLQuery(tmpc);
 				synchronized (p) {
@@ -163,7 +163,7 @@ public class ModuleHighFiveSQL extends Module implements ILua {
 		Data.config.setNotExists("hf-announce",true);
 		Data.config.setNotExists("hf-maxtime",1000*60*5);
 		try {
-			SQL.raw("CREATE TABLE IF NOT EXISTS highfive (pair text NOT NULL, times INTEGER NOT NULL, timestamp BIG INTEGER(20) NOT NULL, identified int(2) NOT NULL  );");
+			SQL.raw("CREATE TABLE IF NOT EXISTS "+ SQL.getTable("highfive") +" (pair text NOT NULL, times INTEGER NOT NULL, timestamp BIG INTEGER(20) NOT NULL, identified int(2) NOT NULL  );");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -249,16 +249,6 @@ public class ModuleHighFiveSQL extends Module implements ILua {
 		public Integer times = 0;
 		public Integer id = 0;
 		public Long timestamp = (System.currentTimeMillis() / 1000L);
-		
-		public Pair(String n1, String n2) {
-			if (n1.compareTo(n2)>0) {
-				String temp = n1;
-				n1 = n2;
-				n2 = temp;
-			}
-			this.nick1 = n1;
-			this.nick2 = n2;
-		}
 		
 		public Pair(String n1, String n2, Integer t) {
 			if (n1.compareTo(n2)>0) {

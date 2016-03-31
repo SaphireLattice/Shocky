@@ -1,16 +1,14 @@
 package pl.shockah.shocky;
 
-import java.io.IOException;
 import java.util.*;
 
 import org.pircbotx.*;
-import org.pircbotx.MultiBotManager.BotBuilder;
-import org.pircbotx.exception.*;
+import org.pircbotx.ShockyMultiBotManager.ShockyBotBuilder;
 
 import pl.shockah.Reflection;
 
 public class MultiChannel {
-	private static List<PircBotX> botList = new LinkedList<PircBotX>();
+	private static List<ShockyBot> botList = new LinkedList<>();
 	protected static String channelPrefixes = null;
 	
 	public static Channel get(String name) {
@@ -25,45 +23,47 @@ public class MultiChannel {
 		}
 		return null;
 	}
-	
-	private static PircBotX createBot() {
-		PircBotX bot = null;
-		BotBuilder builder = null;
+
+	private static ShockyBot createBot(int id) {
+        System.out.println("MultiChannel.createBot: Creating ShockyBot #" + id);
+        ShockyBot bot = null;
+		ShockyBotBuilder builder;
 		try {
-			builder = Shocky.getBotManager().createBot(Data.config.getString("main-server"), Data.config.getInt("main-port"), Data.config.getString("main-pass"), null);
+			builder = Shocky.getBotManager().createBot(Data.config.getString(id+"-server"), Data.config.getInt(id+"-port"), Data.config.getString(id+"-pass"), null, id);
+            System.out.println("MultiChannel.createBot: Created ShockyBotBuilder #" + id);
 			bot = builder.getBot();
-			bot.setVersion(Data.config.getString("main-version"));
-			if (!connect(bot))
+			bot.setVersion(Data.config.getString(id+"-version"));
+			if (!connect(bot, id)) {
+                System.out.println("MultiChannel.createBot: Failed to connect bot #" + id);
 				return null;
+			}
 			if (channelPrefixes == null)
 				channelPrefixes = Reflection.getPrivateValue(PircBotX.class,"channelPrefixes",bot);
 			botList.add(bot);
+            bot.setID(id);
 		} catch(Exception e) { e.printStackTrace();}
 		return bot;
 	}
 	
-	public static boolean connect(PircBotX bot) {
-		String server = Data.config.getString("main-server");
-		Integer port = Data.config.getInt("main-port");
-		String pass = Data.config.getString("main-pass");
-		try {
-			bot.connect(server.equalsIgnoreCase("localhost") ? null : server, port, pass);
-			if (!bot.isConnected())
-				return false;
-			if (!Data.config.getString("main-nickservpass").isEmpty())
-				bot.identify(Data.config.getString("main-nickservpass"));
-			return true;
-		} catch (NickAlreadyInUseException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (IrcException e) {
-			e.printStackTrace();
-		}
-		return false;
+	public static boolean connect(ShockyBot bot, int id) {
+        System.out.println("MultiChannel.connect: Connecting bot #" + id);
+        String server = Data.config.getString(id + "-server");
+        Integer port = Data.config.getInt(id + "-port");
+        String pass = Data.config.getString(id + "-pass");
+        try {
+            bot.connect(server.equalsIgnoreCase("localhost") ? null : server, port, pass);
+            if (!bot.isConnected())
+                return false;
+            if (!Data.config.getString(id+"-nickservpass").isEmpty())
+                bot.identify(Data.config.getString(id+"-nickservpass"));
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
 	}
 	
-	public static List<String> getBotChannels(PircBotX bot) throws Exception {
+	public static List<String> getBotChannels(ShockyBot bot) throws Exception {
 		Set<Channel> set = bot.getChannels();
 		List<String> list = new ArrayList<String>(set.size());
 		for (Channel channel : set)
@@ -75,60 +75,62 @@ public class MultiChannel {
 		Data.channels.remove(channel);
 	}
 	
-	public static void join(String... channels) throws Exception {
-		join(botList, channels);
+	public static void join(int id ,String... channels) throws Exception {
+        ShockyBot bot;
+        if (botList.size() < id)
+            bot = createBot(id);
+        else
+            bot = botList.get(id - 1);
+		join(bot, id, channels);
 	}
 	
-	public synchronized static void join(List<? extends PircBotX> bots, String... channels) throws Exception {
-		if (channels == null || channels.length == 0)
-			return;
+	public synchronized static void join(ShockyBot bot, int id, String... channels) throws Exception {
+        System.out.println("MultiChannel.join: Joining bot #" + id);
+		if (channels == null || channels.length == 0) {
+            System.out.println("MultiChannel.join: No channels for bot #" + id);
+            return;
+        }
+		List<Thread> joinThreads = new LinkedList<>();
+		synchronized (bot) {
+			List<String> currentChannels = new LinkedList<>();
+            currentChannels.addAll(getBotChannels(bot));
 		
-		List<Thread> joinThreads = new LinkedList<Thread>();
-		synchronized (botList) {
-			List<String> currentChannels = new LinkedList<String>();
-			for (PircBotX bot : botList)
-				currentChannels.addAll(getBotChannels(bot));
-		
-			List<String> joinList = new LinkedList<String>(Arrays.asList(channels));
+			List<String> joinList = new LinkedList<>(Arrays.asList(channels));
 			joinList.removeAll(currentChannels);
 			if (joinList.size() == 0)
 				return;
 			
 			Iterator<String> joinIter = joinList.iterator();
-			for (PircBotX bot : bots) {
-				if (!joinIter.hasNext())
-					break;
-				List<String> channelList = new ArrayList<String>(getBotChannels(bot));
-				channelList.removeAll(joinList);
-				if (channelList.size() >= Data.config.getInt("main-maxchannels"))
-					continue;
-				joinThreads.add(joinChannels(bot, joinIter, channelList.size()));
-			}
-			
-			if (bots == botList) {
-				while (joinIter.hasNext()) {
-					Thread t = joinChannels(createBot(), joinIter, 0);
-					if (t == null)
-						break;
-					joinThreads.add(t);
-					Thread.sleep(3000);
-				}
-			}
+            if (joinIter.hasNext()) {
+                List<String> channelList = new ArrayList<>(getBotChannels(bot));
+                channelList.removeAll(joinList);
+                if (!(channelList.size() >= Data.config.getInt(id + "-maxchannels")))
+                    joinThreads.add(joinChannels(bot, joinIter, channelList.size(), id));
+            }
+
+			if (joinIter.hasNext()) {
+                    System.out.println("MultiChannel.join: joinIter.hasNext()  ");
+					Thread t = joinChannels(bot, joinIter, 0, id);
+					if (t != null) {
+                        joinThreads.add(t);
+                        Thread.sleep(3000);
+                    }
+            }
 		}
 		for (Thread t : joinThreads)
 			t.join();
 		System.out.format("Finished joining %d channel%s",channels.length,channels.length==1?"":"s").println();
 	}
 	
-	private static Thread joinChannels(PircBotX bot, Iterator<String> iter, int start) {
+	private static Thread joinChannels(PircBotX bot, Iterator<String> iter, int start, int id) {
 		if (bot == null || iter == null || !iter.hasNext())
 			return null;
 		List<String> botChannel = new ArrayList<String>();
-		for (int i = start; iter.hasNext() && i < Data.config.getInt("main-maxchannels"); ++i) {
+		for (int i = start; iter.hasNext() && i < Data.config.getInt(id+"-maxchannels"); ++i) {
 			String channel = iter.next().toLowerCase();
 			synchronized (Data.channels) {
-				if (!Data.channels.contains(channel))
-					Data.channels.add(channel);
+				if (!Data.channels.get(id).contains(channel))
+					Data.channels.get(id).add(channel);
 			}
 			botChannel.add(channel);
 		}
@@ -165,22 +167,19 @@ public class MultiChannel {
 		}
 	}
 	
-	public static void part(String... channels) throws Exception {
-		List<String> argsList = null;
+	public static void part(int id, String... channels) throws Exception {
+		List<String> argsList;
 		if (channels == null || channels.length == 0)
-			argsList = new LinkedList<String>(Data.channels);
+			argsList = new LinkedList<>(Data.channels.get(id ));
 		else
 			argsList = Arrays.asList(channels);
-		if (!Data.channels.removeAll(argsList))
+		if (!Data.channels.get(id).removeAll(argsList))
 			return;
-		
-		synchronized (botList) {
-			for (PircBotX bot : botList) {
-				List<String> partList = new LinkedList<String>(getBotChannels(bot));
-				partList.retainAll(argsList);
-				for (String channel : partList)
-					bot.partChannel(bot.getChannel(channel));
-			}
-		}
+
+        ShockyBot bot = botList.get(id - 1);
+		List<String> partList = new LinkedList<>(getBotChannels(bot));
+        partList.retainAll(argsList);
+        for (String channel : partList)
+            bot.partChannel(bot.getChannel(channel));
 	}
 }

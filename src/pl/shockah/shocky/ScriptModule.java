@@ -6,7 +6,7 @@ import java.util.Random;
 import java.util.StringTokenizer;
 
 import org.pircbotx.Channel;
-import org.pircbotx.PircBotX;
+import org.pircbotx.ShockyBot;
 import org.pircbotx.User;
 
 import pl.shockah.StringTools;
@@ -20,7 +20,7 @@ public abstract class ScriptModule extends Module {
 	
 	public abstract String identifier();
 	
-	public abstract String parse(Cache cache, PircBotX bot, Channel channel, User sender, Factoid factoid, String code, String message);
+	public abstract String parse(Cache cache, ShockyBot bot, Channel channel, User sender, Factoid factoid, String code, String message);
 	
 	public char stringCharacter() {return '"';}
 	public void appendEscape(StringBuilder sb, String str) {
@@ -48,7 +48,7 @@ public abstract class ScriptModule extends Module {
 		sb.append(str.substring(x)).append(quote);
 	}
 	
-	public Map<String,Object> getParams(PircBotX bot, Channel channel, User sender, String message, Factoid factoid) {
+	public Map<String,Object> getParams(ShockyBot bot, Channel channel, User sender, String message, Factoid factoid) {
 		User[] users;
 		Map<String,Object> map = new LinkedHashMap<String,Object>();
 		if (channel == null)

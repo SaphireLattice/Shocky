@@ -16,6 +16,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.pircbotx.Channel;
 import org.pircbotx.PircBotX;
+import org.pircbotx.ShockyBot;
 import org.pircbotx.User;
 
 import pl.shockah.HTTPQuery;
@@ -70,7 +71,7 @@ public class ModulePHP extends ScriptModule implements IFactoidData {
 		return new File[]{savedData};
 	}
 	
-	public String parse(Cache cache, PircBotX bot, Channel channel, User sender, Factoid factoid, String code, String message) {
+	public String parse(Cache cache, ShockyBot bot, Channel channel, User sender, Factoid factoid, String code, String message) {
 		if (code == null) return "";
 		
 		HTTPQuery q;

@@ -22,7 +22,7 @@ public class ModuleLOLCode extends ScriptModule {
 		Command.removeCommands(cmd);
 	}
 	
-	public String parse(Cache cache, PircBotX bot, Channel channel, User sender, Factoid factoid, String code, String message) {
+	public String parse(Cache cache, ShockyBot bot, Channel channel, User sender, Factoid factoid, String code, String message) {
 		if (code == null) return "";
 		String lines = code.replace(';', '\n').replace('>', '\t');
 		

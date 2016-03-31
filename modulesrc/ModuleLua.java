@@ -9,6 +9,7 @@ import org.luaj.vm2.lib.*;
 import org.luaj.vm2.lib.jse.*;
 import org.pircbotx.Channel;
 import org.pircbotx.PircBotX;
+import org.pircbotx.ShockyBot;
 import org.pircbotx.User;
 
 import pl.shockah.Delegate;
@@ -329,7 +330,7 @@ public class ModuleLua extends ScriptModule implements ResourceFinder {
 	}
 
 	@Override
-	public String parse(Cache cache, PircBotX bot, Channel channel, User sender, Factoid factoid, String code, String message) {
+	public String parse(Cache cache, ShockyBot bot, Channel channel, User sender, Factoid factoid, String code, String message) {
 		if (code == null)
 			return "";
 		String output = null;

@@ -6,6 +6,7 @@ import java.io.InputStream;
 import org.faabtech.brainfuck.BrainfuckEngine;
 import org.pircbotx.Channel;
 import org.pircbotx.PircBotX;
+import org.pircbotx.ShockyBot;
 import org.pircbotx.User;
 import pl.shockah.ZeroInputStream;
 import pl.shockah.shocky.Cache;
@@ -28,7 +29,7 @@ public class ModuleBrainfuck extends ScriptModule {
 		Command.removeCommands(cmd);
 	}
 	
-	public String parse(Cache cache, PircBotX bot, Channel channel, User sender, Factoid factoid, String code, String message) {
+	public String parse(Cache cache, ShockyBot bot, Channel channel, User sender, Factoid factoid, String code, String message) {
 		if (code == null) return "";
 		
 		try {

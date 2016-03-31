@@ -14,7 +14,7 @@ public class CmdJoin extends Command {
 		if (params.tokenCount == 1) {
 			String channel = params.nextParam();
 			try {
-				MultiChannel.join(channel);
+				MultiChannel.join(params.bot.getID(), channel);
 			} catch (Exception e) {
 				e.printStackTrace();
 				callback.append("Already in channel ").append(channel);

@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.pircbotx.Channel;
 import org.pircbotx.PircBotX;
+import org.pircbotx.ShockyBot;
 import org.pircbotx.User;
 
 import pl.shockah.shocky.Cache;
@@ -16,7 +17,7 @@ import pl.shockah.shocky.interfaces.IFactoid;
 import pl.shockah.shocky.interfaces.IRollback;
 
 public class LuaState {
-	public final PircBotX bot;
+	public final ShockyBot bot;
 	public final Channel chan;
 	public final User user;
 	
@@ -60,11 +61,11 @@ public class LuaState {
 			cache.put(type, key, value);
 	}
 	
-	public LuaState(PircBotX bot, Channel chan, User user) {
+	public LuaState(ShockyBot bot, Channel chan, User user) {
 		this(bot, chan, user, null);
 	}
 
-	public LuaState(PircBotX bot, Channel chan, User user, Cache cache) {
+	public LuaState(ShockyBot bot, Channel chan, User user, Cache cache) {
 		this.bot = bot;
 		this.chan = chan;
 		this.user = user;

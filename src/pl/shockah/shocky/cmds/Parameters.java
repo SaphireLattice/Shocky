@@ -3,7 +3,7 @@ package pl.shockah.shocky.cmds;
 import java.util.StringTokenizer;
 
 import org.pircbotx.Channel;
-import org.pircbotx.PircBotX;
+import org.pircbotx.ShockyBot;
 import org.pircbotx.User;
 
 import pl.shockah.shocky.Data;
@@ -13,7 +13,7 @@ import pl.shockah.shocky.cmds.Command.EType;
 
 public class Parameters {
 
-	public final PircBotX bot;
+	public final ShockyBot bot;
 	public final Channel channel;
 	public final User sender;
 	public final EType type;
@@ -22,7 +22,7 @@ public class Parameters {
 	private StringTokenizer tokens;
 	public final int tokenCount;
 	
-	public Parameters(PircBotX bot, EType type, Channel channel, User sender, String input) {
+	public Parameters(ShockyBot bot, EType type, Channel channel, User sender, String input) {
 		this.bot = bot;
 		this.type = type;
 		this.channel = channel;

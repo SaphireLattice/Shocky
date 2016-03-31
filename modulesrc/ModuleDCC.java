@@ -88,10 +88,10 @@ public class ModuleDCC extends Module {
 	}
 	
 	public class Session extends Program {
-		private final PircBotX bot;
+		private final ShockyBot bot;
 		private final DccManager manager;
 		
-		public Session(DccManager manager, DccChat chat, PircBotX bot) {
+		public Session(DccManager manager, DccChat chat, ShockyBot bot) {
 			super(chat);
 			this.manager = manager;
 			this.bot = bot;
@@ -155,8 +155,8 @@ public class ModuleDCC extends Module {
 						chat.sendLine("Connecting ".concat(bot.getName()));
 						Thread.sleep(10000);
 						
-						if (MultiChannel.connect(bot))
-							MultiChannel.join(Collections.singletonList(bot),Data.channels.toArray(new String[0]));
+						if (MultiChannel.connect(bot, bot.getID()))
+							MultiChannel.join(bot.getID(),Data.channels.get(bot.getID()).toArray(new String[0]));
 					} catch (Exception e) {
 						e.printStackTrace();
 					}

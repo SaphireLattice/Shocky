@@ -23,7 +23,7 @@ public class CmdPart extends Command {
 			if (params.type == EType.Channel) {
 				params.checkAny();
 				try {
-					MultiChannel.part(params.channel.getName());
+					MultiChannel.part(params.bot.getID(), params.channel.getName());
 				} catch (Exception e) {e.printStackTrace();}
 				return;
 			}
@@ -33,7 +33,7 @@ public class CmdPart extends Command {
 			
 			if (channel.equalsIgnoreCase("all")) {
 				try {
-					MultiChannel.part(new String[0]);
+					MultiChannel.part(params.bot.getID(), new String[0]);
 				} catch (Exception e) {e.printStackTrace();}
 				return;
 			} else {
@@ -43,7 +43,7 @@ public class CmdPart extends Command {
 					return;
 				}
 				try {
-					MultiChannel.part(channel);
+					MultiChannel.part(params.bot.getID(), channel);
 				} catch (Exception e) {e.printStackTrace();}
 				return;
 			}

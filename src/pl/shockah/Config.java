@@ -24,7 +24,12 @@ public class Config {
 	
 	private HashMap<String,String> mapValues = new HashMap<String,String>();
 	private HashMap<String,Config> mapSubconfigs = new HashMap<String,Config>();
-	
+
+    private static final void keyPrint(String from, String key) {
+        if (false)
+            System.out.println(from + ": " + key);
+    }
+
 	public synchronized void set(String key, Object value) {
 		String[] sub = key.split(Pattern.quote("->"));
 		
@@ -97,6 +102,7 @@ public class Config {
 	public void setNotExists(String key, double value) {setNotExists(key,new Double(value));}
 	
 	public synchronized String getString(String key) {
+        keyPrint("getString",key);
 		if (mapValues.containsKey(key))
 				return mapValues.get(key);
 		
@@ -106,15 +112,28 @@ public class Config {
 		return null;
 	}
 	public boolean getBoolean(String key) {
+        keyPrint("getBoolean",key);
 		String v = getString(key);
 		if (v.equals("1")) return true;
 		if (v.equals("0")) return false;
 		return Boolean.parseBoolean(v);
 	}
-	public int getInt(String key) {return Integer.parseInt(getString(key));}
-	public long getLong(String key) {return Long.parseLong(getString(key));}
-	public float getFloat(String key) {return Float.parseFloat(getString(key));}
-	public double getDouble(String key) {return Double.parseDouble(getString(key));}
+	public int getInt(String key) {
+        keyPrint("getInt",key);
+		return Integer.parseInt(getString(key));
+	}
+	public long getLong(String key) {
+        keyPrint("getLong",key);
+        return Long.parseLong(getString(key));
+    }
+	public float getFloat(String key) {
+        keyPrint("getFloat",key);
+        return Float.parseFloat(getString(key));
+    }
+	public double getDouble(String key) {
+        keyPrint("getDouble",key);
+        return Double.parseDouble(getString(key));
+    }
 	
 	public Set<String> getKeysSubconfigs() {
 		return mapSubconfigs.keySet();

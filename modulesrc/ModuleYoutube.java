@@ -34,14 +34,19 @@ public class ModuleYoutube extends Module implements IAcceptURLs {
 	private ArrayList<Pattern> patternsAction = new ArrayList<Pattern>(), patternsMessage = new ArrayList<Pattern>();
 	
 	public static CharSequence getVideoInfo(User user, String vID) {
-		HTTPQuery q = null;
+		HTTPQuery q;
 		String key = Data.config.getString("youtube-key");
 		if (key.isEmpty())
 			return null;
 		try {
 			StringBuilder sb = new StringBuilder("https://www.googleapis.com/youtube/v3/videos?part=snippet%2Cstatistics%2CcontentDetails&key=");
-			sb.append(URLEncoder.encode(key,"UTF8")).append("&id=").append(URLEncoder.encode(vID,"UTF8")).append("&quotaUser=").append(URLEncoder.encode(user.getHostmask(),"UTF8"));
-			sb.append("&fields=items(snippet(channelTitle%2Ctitle)%2CcontentDetails%2Fduration%2Cstatistics(likeCount%2CdislikeCount%2CviewCount))");
+			sb.append(URLEncoder.encode(key,"UTF8"))
+              .append("&id=")
+              .append(URLEncoder.encode(vID,"UTF8"))
+              .append("&quotaUser=")
+              .append(URLEncoder.encode(user.getHostmask(),"UTF8"))
+			  .append("&fields=items(snippet(channelTitle%2Ctitle)%2CcontentDetails%2Fduration%2Cstatistics(likeCount%2CdislikeCount%2CviewCount))");
+
 			q = HTTPQuery.create(sb.toString());
 			q.connect(true,false);
 			
@@ -80,13 +85,18 @@ public class ModuleYoutube extends Module implements IAcceptURLs {
 		return null;
 	}
 	public static CharSequence getVideoSearch(User user, String query, boolean data, boolean url) {
-		HTTPQuery q = null;
+		HTTPQuery q;
 		String key = Data.config.getString("youtube-key");
 		if (key.isEmpty())
 			return null;
 		try {
 			StringBuilder sb = new StringBuilder("https://www.googleapis.com/youtube/v3/search?safeSearch=none&part=snippet&type=video&maxResults=1&fields=items%2Fid%2FvideoId&key=");
-			sb.append(URLEncoder.encode(key,"UTF8")).append("&q=").append(URLEncoder.encode(query,"UTF8")).append("&quotaUser=").append(URLEncoder.encode(user.getHostmask(),"UTF8"));
+			sb.append(URLEncoder.encode(key,"UTF8"))
+              .append("&q=")
+              .append(URLEncoder.encode(query,"UTF8"))
+              .append("&quotaUser=")
+              .append(URLEncoder.encode(user.getHostmask(),"UTF8"));
+
 			q = HTTPQuery.create(sb.toString());
 			q.connect(true,false);
 			

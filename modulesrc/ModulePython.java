@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 
 import org.pircbotx.Channel;
 import org.pircbotx.PircBotX;
+import org.pircbotx.ShockyBot;
 import org.pircbotx.User;
 
 import pl.shockah.HTTPQuery;
@@ -30,7 +31,7 @@ public class ModulePython extends ScriptModule {
 		Command.removeCommands(cmd);
 	}
 	
-	public String parse(Cache cache, PircBotX bot, Channel channel, User sender, Factoid factoid, String code, String message) {
+	public String parse(Cache cache, ShockyBot bot, Channel channel, User sender, Factoid factoid, String code, String message) {
 		if (code == null) return "";
 		
 		StringBuilder sb = new StringBuilder();

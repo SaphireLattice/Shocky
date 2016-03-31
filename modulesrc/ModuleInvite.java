@@ -83,9 +83,9 @@ public class ModuleInvite extends Module {
 		}
 	}
 	
-	private void joinChannel(PircBotX bot, String channel, String username) {
+	private void joinChannel(ShockyBot bot, String channel, String username) {
 		try {
-			MultiChannel.join(channel);
+			MultiChannel.join(bot.getID(), channel);
 		} catch (Exception e) {
 			if (username != null) {
 				e.printStackTrace();

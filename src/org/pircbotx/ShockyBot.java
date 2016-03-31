@@ -11,9 +11,11 @@ import pl.shockah.shocky.interfaces.ILogger;
 public class ShockyBot extends PircBotX {
 	
 	private static final List<ILogger> loggers = new ArrayList<ILogger>();
+	private int id;
 
-	public ShockyBot() {
+	public ShockyBot(int id) {
 		super();
+		this.id = id;
 	}
 
 	@Override
@@ -116,4 +118,7 @@ public class ShockyBot extends PircBotX {
 		if (!isRestricted(message))
 			super.sendMessage(target, message);
 	}
+
+	public int getID() { return this.id; }
+	public void setID(int id) { this.id = id; }
 }

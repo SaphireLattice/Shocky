@@ -21,12 +21,11 @@ public class ModuleReconnect extends Module /*implements ActionListener*/ {
 		if (Shocky.isClosing()) return;
 		try {
 			ShockyBot bot = event.getBot();
-			System.out.print("Reconnecting ");
-			System.out.println(bot.getName());
+			System.out.printf("Reconnecting " + bot.getName() + " #%d\n", bot.getID());
 			Thread.sleep(10000);
 			
-			if (MultiChannel.connect(bot))
-				MultiChannel.join(Collections.singletonList(bot),Data.channels.toArray(new String[0]));
+			if (MultiChannel.connect(bot, bot.getID()))
+				MultiChannel.join(bot.getID(), Data.channels.get(bot.getID()).toArray(new String[0]));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

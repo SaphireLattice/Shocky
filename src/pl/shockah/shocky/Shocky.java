@@ -21,7 +21,8 @@ public class Shocky extends ListenerAdapter {
 	private static final ScheduledExecutorService timer = Executors.newScheduledThreadPool(1);
 	private static final RunnableSave saver = new RunnableSave();
 	private static ScheduledFuture<?> futureSave = null;
-	private static MultiBotManager multiBot;
+	//private static ArrayList<MultiBotManager> multiBot = new ArrayList<MultiBotManager>();
+    private static ShockyMultiBotManager multiBot;
 	private static boolean isClosing = false;
 	private static SandboxSecurityManager secure;
 	
@@ -29,29 +30,36 @@ public class Shocky extends ListenerAdapter {
 		System.setProperty("http.keepAlive", "false");
 		Data.load();
 		SQL.init();
-				
-		multiBot = new ShockyMultiBotManager(Data.config.getString("main-botname"));
-		try {
-			multiBot.setName(Data.config.getString("main-botname"));
-			multiBot.setLogin(Data.config.getString("main-botname"));
-			multiBot.setAutoNickChange(true);
-			multiBot.setMessageDelay(Data.config.getInt("main-messagedelay"));
-			multiBot.setEncoding("UTF8");
-			multiBot.setVerbose(Data.config.getBoolean("main-verbose"));
-			multiBot.setListenerManager(new ShockyListenerManager<PircBotX>());
-		} catch (Exception e) {e.printStackTrace();}
-		multiBot.getListenerManager().addListener(new Shocky());
-		
-		Module.loadNewModules();
-		
 
-		System.out.println("--- Shocky, the IRC bot, up and running! ---");
-		System.out.println("--- type \"help\" to list all available commands ---");
-		
-		try {
-			MultiChannel.join(Data.channels.toArray(new String[0]));
-		} catch (Exception e) {e.printStackTrace();}
-		
+
+        multiBot = new ShockyMultiBotManager(Data.config.getString("main-botname"));
+        try {
+            multiBot.setName(Data.config.getString("main-botname"));
+            multiBot.setLogin(Data.config.getString("main-botname"));
+            multiBot.setAutoNickChange(true);
+            multiBot.setMessageDelay(Data.config.getInt("main-messagedelay"));
+            multiBot.setEncoding("UTF8");
+            multiBot.setVerbose(Data.config.getBoolean("main-verbose"));
+            multiBot.setListenerManager(new ShockyListenerManager<PircBotX>());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        multiBot.getListenerManager().addListener(new Shocky());
+
+        Module.loadNewModules();
+
+
+        System.out.println("--- Shocky, the IRC bot, up and running! ---");
+        System.out.println("--- type \"help\" to list all available commands ---");
+
+        try {
+            for (int i=1; i <= Data.config.getInt("main-servers"); i++)
+                MultiChannel.join(i, Data.channels.get(i).toArray(new String[0]));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
 		int delay = Data.config.getInt("main-saveinterval");
 		if (delay <= 0)
 			delay = 300;
@@ -67,7 +75,7 @@ public class Shocky extends ListenerAdapter {
 		secure = new SandboxSecurityManager(files.toArray(new File[0]));
 		System.setSecurityManager(secure);
 	}
-	
+
 	public static void dataSave() {
 		saver.run();
 	}
@@ -82,12 +90,12 @@ public class Shocky extends ListenerAdapter {
 	public static void die(String reason) {
 		timer.shutdown();
 		isClosing = true;
-		Set<PircBotX> bots = getBots();
+		Set<ShockyBot> bots = getBots();
 		for (Module module : Module.getModules(false)) for (PircBotX bot : bots) module.onDie(bot);
 		
 		if (reason == null) {
-			multiBot.disconnectAll();
-			killMe();
+            multiBot.disconnectAll();
+            killMe();
 			return;
 		}
 		reason = reason.replace("\n"," | ");
@@ -111,11 +119,11 @@ public class Shocky extends ListenerAdapter {
 		System.exit(0);
 	}
 	
-	public static MultiBotManager getBotManager() {
+	public static ShockyMultiBotManager getBotManager() {
 		return multiBot;
 	}
-	public static Set<PircBotX> getBots() {
-		return multiBot.getBots();
+	public static Set<ShockyBot> getBots() {
+		return multiBot.getShockyBots();
 	}
 	
 	public static void send(PircBotX bot, Command.EType type, Command.EType msgChannel, Command.EType msgPrivate, Command.EType msgNotice, Command.EType msgConsole, Channel channel, User user, String message) {

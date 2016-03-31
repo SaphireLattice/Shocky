@@ -399,7 +399,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		return false;
 	}
 
-	public void onMessage(PircBotX bot, Channel channel, User sender, String msg) {
+	public void onMessage(ShockyBot bot, Channel channel, User sender, String msg) {
 		msg = StringTools.trimWhitespace(msg).toString();
 		if (msg.length() < 2)
 			return;
@@ -538,7 +538,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		}
 	}
 
-	public String runFactoid(Cache cache, PircBotX bot, Channel channel, User sender, String message) throws Exception {
+	public String runFactoid(Cache cache, ShockyBot bot, Channel channel, User sender, String message) throws Exception {
 		message = StringTools.trimWhitespace(message).toString();
 		Set<String> checkRecursive = new HashSet<String>();
 		while (true) {
@@ -581,7 +581,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		return null;
 	}
 
-	public String parse(Cache cache, PircBotX bot, Channel channel, User sender, String message, Factoid f, String raw) throws Exception {
+	public String parse(Cache cache, ShockyBot bot, Channel channel, User sender, String message, Factoid f, String raw) throws Exception {
 		if (raw == null || raw.length() == 0 || raw.startsWith("<noreply>"))
 			return "";
 		String type = null;
