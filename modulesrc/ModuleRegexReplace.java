@@ -31,8 +31,8 @@ import pl.shockah.shocky.lines.LineWithUsers;
 public class ModuleRegexReplace extends Module {
 
 	public static enum Type {SUB, MATCH, TRANSLATE};
-	public static final Pattern sedPattern = Pattern.compile("^([sm]|tr)/(.*?(?<!\\\\))/(?:(.*?(?<!\\\\))/)?([a-z]*)");
-	public static String[] groupColors = new String[] {"01,14","03,09","10,11","05,04","06,13","07,08","02,12","15,00"};
+	private static final Pattern sedPattern = Pattern.compile("^([sm]|tr)/(.*?(?<!\\\\))/(?:(.*?(?<!\\\\))/)?([a-z]*)");
+	private static String[] groupColors = new String[] {"01,14","03,09","10,11","05,04","06,13","07,08","02,12","15,00"};
 
 	@Override
 	public String name() {return "regexreplace";}
@@ -297,10 +297,20 @@ public class ModuleRegexReplace extends Module {
 						return null;
 				}
 			}
-			if (line instanceof LineAction) {
-				sb.insert(0, "\001ACTION ");
-				sb.append('\001');
-			}
+            String lineUser = line.users[0];
+            String botName = Data.config.getString("main-botname");
+            if (!lineUser.toLowerCase().contains(botName.toLowerCase())) {
+                if (line instanceof LineAction) {
+                    sb.insert(0, " ");
+                    sb.insert(0, lineUser);
+                    sb.insert(0, "* ");
+                }
+                if (line instanceof LineMessage) {
+                    sb.insert(0, "> ");
+                    sb.insert(0, lineUser);
+                    sb.insert(0, "<");
+                }
+            }
 			return StringTools.limitLength(sb);
 		}
 	}
