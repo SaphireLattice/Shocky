@@ -1,16 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project default="create_run_jar" name="Create Runnable Jar for Project Shocky">
-    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
-    <!--ANT 1.7 is required                                        -->
+    <target name="create_build_dir">
+        <mkdir dir="build"/>
+        <mkdir dir="build/modules"/>
+        <mkdir dir="build/bin"/>
+        <copy todir="build/bin">
+            <fileset dir="bin" includes="**/*.class" excludes="Module*.class"/>
+        </copy>
+        <copy todir="build/modules">
+            <fileset dir="bin" includes="Module*.class"/>
+        </copy>
+    </target>
     <target name="create_run_jar">
-    	<mkdir dir="bin"/>
-    	<delete file="shocky.jar"/>
-        <jar destfile="shocky.jar" filesetmanifest="mergewithoutmain">
+        <antcall target="create_build_dir"/>
+    	<delete file="build/shocky.jar"/>
+        <jar destfile="build/shocky.jar" filesetmanifest="mergewithoutmain">
             <manifest>
                 <attribute name="Main-Class" value="pl.shockah.shocky.Shocky"/>
                 <attribute name="Class-Path" value=". libs/pircbotx-1.9.jar libs/sqlite-jdbc-3.8.11.1.jar libs/commons-lang3-3.1.jar libs/commons-codec-1.8.jar libs/opennlp-tools-1.5.3.jar libs/LOLCODE-0.11.jar libs/luaj-jse-2.0.2.jar libs/mysql-connector-java-5.1.22-bin.jar libs/lanterna-3.0.0-beta1.jar"/>
             </manifest>
-            <fileset dir="bin"/>
+            <fileset dir="build/bin"/>
         </jar>
     </target>
 </project>
