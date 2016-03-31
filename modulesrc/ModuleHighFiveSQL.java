@@ -70,7 +70,7 @@ public class ModuleHighFiveSQL extends Module implements ILua {
 			q.addOrder("timestamp", false);
 			q.setLimitCount(1);
 			
-			csrs = SQL.select(q,false);
+			csrs = SQL.select(q,false,"highfive");
 			rs = csrs.rs;
 			if (rs != null){
 				if (rs.next()) {
@@ -103,7 +103,7 @@ public class ModuleHighFiveSQL extends Module implements ILua {
 				qu.addCriterions(new CriterionNumber("identified", CriterionNumber.Operation.Equals, pa.id));
 				qu.set("times", pa.times);
 				qu.set("timestamp", pa.timestamp);
-				SQL.update(qu);
+				SQL.update(qu,"highfive");
 			}
 			else {
 				QueryInsert qi = new QueryInsert(SQL.getTable("highfive"));
@@ -163,7 +163,7 @@ public class ModuleHighFiveSQL extends Module implements ILua {
 		Data.config.setNotExists("hf-announce",true);
 		Data.config.setNotExists("hf-maxtime",1000*60*5);
 		try {
-			SQL.raw("CREATE TABLE IF NOT EXISTS "+ SQL.getTable("highfive") +" (pair text NOT NULL, times INTEGER NOT NULL, timestamp BIG INTEGER(20) NOT NULL, identified int(2) NOT NULL  );");
+			SQL.raw("highfive","CREATE TABLE IF NOT EXISTS "+ SQL.getTable("highfive") +" (pair text NOT NULL, times INTEGER NOT NULL, timestamp BIG INTEGER(20) NOT NULL, identified int(2) NOT NULL  );");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
