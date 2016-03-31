@@ -92,7 +92,7 @@ public class Parameters {
 	
 	public boolean isController() {
 		if (bot == null) return true;
-		if (bot.getInetAddress().isLoopbackAddress()) return true;
+		//if (bot.getInetAddress().isLoopbackAddress()) return true;
 		if (type == EType.Console) return true;
 		if (Shocky.getLogin(sender) == null) return false;
 		return Data.controllers.contains(Shocky.getLogin(sender));
