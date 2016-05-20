@@ -72,10 +72,8 @@ public class ModulePaste extends Module implements IPaste {
 			}
 			
 			if (file != null) {
-				StringBuilder sb = new StringBuilder(ws.getURL());
 				HttpContext context = ws.addPaste(file);
-				sb.append(context.getPath());
-				return sb.toString();
+				return ws.getURL(context.getPath());
 			}
 		}
 		String link = null;

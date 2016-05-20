@@ -917,7 +917,20 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 			} catch(SQLException e) {
 				e.printStackTrace();
 			}*/
-			if (hasForget) {
+			StringBuilder statementString = new StringBuilder("SELECT * FROM factoid WHERE (");
+			if (hasChannel)
+				statementString.append("(channel IS NULL OR channel=?)");
+			else
+			    statementString.append("channel IS NULL");
+            statementString.append(" AND factoid=?");
+            if (hasForget)
+                statementString.append(" AND forgotten=?");
+            statementString.append(") ORDER BY");
+            if (hasChannel)
+                statementString.append(" channel DESC,");
+            statementString.append(" stamp DESC LIMIT ?");
+
+			/*if (hasForget) {
 				if (hasChannel)
 					p = c.prepareStatement("SELECT * FROM factoid WHERE ((channel IS NULL OR channel=?) AND factoid=? AND forgotten=?) ORDER BY channel DESC, stamp DESC LIMIT ?");
 				else
@@ -927,7 +940,9 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 					p = c.prepareStatement("SELECT * FROM factoid WHERE ((channel IS NULL OR channel=?) AND factoid=?) ORDER BY channel DESC, stamp DESC LIMIT ?");
 				else
 					p = c.prepareStatement("SELECT * FROM factoid WHERE (channel IS NULL AND factoid=?) ORDER BY stamp DESC LIMIT ?");
-			}
+			}*/
+
+			p = c.prepareStatement(statementString.toString());
 			if (cache != null && !cache.containsKey(sqlHash, key))
 				cache.put(sqlHash, key, p);
 		}
@@ -997,6 +1012,31 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 		
 		return f;
 	}
+
+    public Factoid[] getFactoids() {
+        Factoid[] f = null;
+        ResultSet j;
+        try {
+            Connection tmpc = SQL.getSQLConnection(fmname);
+            PreparedStatement p = tmpc.prepareStatement("SELECT * FROM factoid");
+            synchronized (p) {
+                int i = 1;
+                j = p.executeQuery();
+                p.clearParameters();
+            }
+            if (j == null || j.isClosed())
+                return null;
+
+            f = Factoid.arrayFromResultSet(j);
+            p.close();
+            tmpc.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return f;
+    }
 
 	public Factoid[] getFactoids(Cache cache, int max, Channel channel, String factoid) {
 		Factoid[] f = null;

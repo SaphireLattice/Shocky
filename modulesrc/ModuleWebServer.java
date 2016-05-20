@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.UUID;
 
 import pl.shockah.Helper;
@@ -23,10 +24,12 @@ import com.sun.net.httpserver.HttpServer;
 
 
 public class ModuleWebServer extends Module implements IWebServer {
+    private static HashMap<String,HttpContext> contexts = new HashMap<>();
 	private static HttpServer server;
 	private Command cmd;
 	private static final String mname = "webserver";
-	private static final String hostname = "reynir.aww.moe";
+	private static final String hostname = "localhost";
+    private String baseURL = "https://reynir.aww.moe/shocky";
 	
 	@Override
 	public String name() {
@@ -36,7 +39,7 @@ public class ModuleWebServer extends Module implements IWebServer {
 	public void onEnable(File f) {
 		System.out.printf("[Module %s] Starting up...", mname).println();
 		try {
-			if (!this.start(hostname, 48000))
+			if (!this.start(hostname, 8000))
 				System.out.printf("[Module %s] WebSever failed to start.\n", mname);;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -53,7 +56,7 @@ public class ModuleWebServer extends Module implements IWebServer {
 		Data.config.setNotExists("web-hostname","");
 		try {
 			InetSocketAddress addr = new InetSocketAddress(Inet4Address.getByName(hostname), port);
-			if (server != null)
+			if (exists())
 				server.stop(0);
 			server = HttpServer.create(addr, 0);
 			server.start();
@@ -68,7 +71,7 @@ public class ModuleWebServer extends Module implements IWebServer {
 	}
 	
 	public void stop() {
-		if (server == null)
+        if (!exists())
 			return;
 		server.stop(0);
 		server = null;
@@ -78,31 +81,48 @@ public class ModuleWebServer extends Module implements IWebServer {
 	public boolean exists() {
 		return (server != null);
 	}
-	
-	public InetSocketAddress address() {
+
+    public InetSocketAddress address() {
 		if (server == null)
 			return null;
 		return server.getAddress();
 	}
-	
+
 	public String getURL() {
-		if (server == null)
+		return getURL("");
+	}
+
+	public String getURL(String path) {
+        if (baseURL != null)
+            return baseURL + path;
+		if (!exists())
 			return null;
 		String l_hostname = Data.config.getString("web-hostname");
 		if (!l_hostname.isEmpty())
-			return l_hostname;
+			return l_hostname + path;
 		InetSocketAddress addr = address();
 		StringBuilder sb = new StringBuilder("http://");
 		sb.append(hostname);
 		if (addr.getPort()!=80)
-			sb.append(':').append(addr.getPort());
+			sb.append(':').append(addr.getPort()).append(path);
 		return sb.toString();
 	}
-	
+
+    public HttpContext createContext(String url, HttpHandler handler) {
+        HttpContext context = server.createContext(url, handler);
+        contexts.put(url, context);
+        return context;
+    }
+
+    public boolean removeContext(String contextURL) {
+        return removeContext(contexts.get(contextURL));
+    }
+
 	public boolean removeContext(HttpContext context) {
 		if (server == null)
 			return false;
 		server.removeContext(context);
+        contexts.remove(context);
 		return true;
 	}
 	
@@ -110,14 +130,14 @@ public class ModuleWebServer extends Module implements IWebServer {
 		if (server == null)
 			return null;
 		UUID id = UUID.randomUUID();
-		return server.createContext("/s/" + id.toString(), new RedirectHandler(url));
+		return createContext("/s/" + id.toString(), new RedirectHandler(url));
 	}
 	
 	public HttpContext addPaste(File file) {
 		if (server == null)
 			return null;
 		UUID id = UUID.randomUUID();
-		return server.createContext("/s/" + id.toString(), new PasteHandler(file));
+		return createContext("/s/" + id.toString(), new PasteHandler(file));
 	}
 	
 	private class RedirectHandler implements HttpHandler {
@@ -158,27 +178,19 @@ public class ModuleWebServer extends Module implements IWebServer {
 			if (!(file.exists() && file.canRead())) {
 				buffer = "Paste not found.".getBytes(Helper.utf8);
 				httpExchange.sendResponseHeaders(404, buffer.length);
-				OutputStream os = httpExchange.getResponseBody();
-				try {
-					os.write(buffer, 0, buffer.length);
-				} finally {
-					os.close();
-				}
+                try (OutputStream os = httpExchange.getResponseBody()) {
+                    os.write(buffer, 0, buffer.length);
+                }
 				return;
 			}
 			httpExchange.sendResponseHeaders(200, file.length());
-			
-			OutputStream os = httpExchange.getResponseBody();
-			InputStream is = new FileInputStream(file);
-			try {
-				buffer = new byte[1024];
-				int count;
-				while ((count = is.read(buffer,0,buffer.length)) > 0)
-					os.write(buffer, 0, count);
-			} finally {
-				os.close();
-				is.close();
-			}
+
+            try (OutputStream os = httpExchange.getResponseBody(); InputStream is = new FileInputStream(file)) {
+                buffer = new byte[1024];
+                int count;
+                while ((count = is.read(buffer, 0, buffer.length)) > 0)
+                    os.write(buffer, 0, count);
+            }
 		}
 	}
 	
@@ -220,13 +232,18 @@ public class ModuleWebServer extends Module implements IWebServer {
 				
 					start(host, port);
 					callback.append("Done.");
-				} catch (IOException e) {
-					callback.append(e.getLocalizedMessage());
-				} catch (NumberFormatException e) {
+				} catch (IOException | NumberFormatException e) {
 					callback.append(e.getLocalizedMessage());
 				}
 				return;
 			}
+
+            if (command.equalsIgnoreCase("url")) {
+                if (params.hasMoreParams())
+                    baseURL = params.nextParam();
+                else
+                    baseURL = null;
+            }
 			
 			callback.append(help(params));
 		}

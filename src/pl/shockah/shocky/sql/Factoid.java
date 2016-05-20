@@ -13,13 +13,30 @@ import org.pircbotx.User;
 import pl.shockah.shocky.interfaces.IFactoidRegistry;
 
 public final class Factoid {
+	public static JSONObject toJSONObject(Factoid f) {
+		try {
+			JSONObject fjobject = new JSONObject();
+			fjobject.put("id", f.id)
+					.put("factoid", f.name)
+					.put("channel", f.channel)
+					.put("author", f.author)
+					.put("rawtext", f.rawtext)
+					.put("stamp", f.stamp / 1000)
+					.put("locked", f.locked)
+					.put("forgotten", f.forgotten);
+
+			return fjobject;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 	public static Factoid fromJSONObject(JSONObject j) {
 		try {
 			return new Factoid(j.getLong("id"), j.getString("factoid"), j.getString("channel"), j
-					.getString("author"), j.getString("rawtext"), Long
-					.parseLong(j.getString("stamp")) * 1000, j
-					.getString("locked").equals("1"), j.getString("forgotten")
-					.equals("1"));
+					.getString("author"), j.getString("rawtext"), j.getLong("stamp") * 1000, j
+					.getBoolean("locked"), j.getBoolean("forgotten"));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
