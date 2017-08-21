@@ -1,8 +1,7 @@
 #old files
 *.old
 *.bck
-
-*.class
+*.off
 
 # Package Files #
 *.war
@@ -15,7 +14,7 @@
 # files for the dex VM
 *.dex
 
-# Java class files
+# Java files
 *.class
 
 # generated files
@@ -25,27 +24,17 @@ gen/
 # Local configuration file (sdk path, etc)
 local.properties
 
-# Netbeans
-nbproject/
-nbproject/private/
-build/
-nbbuild/
-dist/
-nbdist/
-nbactions.xml
-nb-configuration.xml
-build.xml
-manifest.mf
-
 #IntelliJ IDEA
 .idea
+*.iml
+
+# Dolphin
+.directory
 
 # Shocky Stuff
-modules/
 data/
-.directory
 *.db
 shocky.jar
-run.bat
-Shocky.launch
-Shocky.iml
+
+.gradle
+build/

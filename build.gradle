@@ -1,0 +1,25 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+repositories {
+    mavenCentral()
+    flatDir dirs: 'libs'
+}
+
+sourceSets {
+    modules {
+        compileClasspath += sourceSets.main.compileClasspath
+        compileClasspath += sourceSets.main.runtimeClasspath
+    }
+}
+
+dependencies {
+    compile 'org.pircbotx:pircbotx:1.9'
+    compile 'org.luaj:luaj-jse:3.0.1'
+    compile 'org.apache.commons:commons-text:1.1'
+    compile 'org.xerial:sqlite-jdbc:3.20.0'
+    compile ':LOLCODE:0.11'
+}
+
+version = '1.0'
+mainClassName = 'pl.shockah.shocky.Shocky'
