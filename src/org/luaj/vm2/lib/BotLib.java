@@ -7,17 +7,17 @@ import pl.shockah.shocky.Module;
 import pl.shockah.shocky.Utils;
 import pl.shockah.shocky.interfaces.IPaste;
 
-public class BotLib extends OneArgFunction {
+public class BotLib extends TwoArgFunction {
 
-	public LuaValue init() {
+	public LuaValue init(LuaValue env) {
 		LuaTable t = (LuaTable) env.get("string");
 		bind(t, BotLib.class, new String[] {"munge", "flip", "odd", "paste", "shorten"}, 1);
 		return t;
 	}
 	
-	public LuaValue call(LuaValue arg) {
+	public LuaValue call(LuaValue arg, LuaValue arg2) {
 		if (opcode == 0)
-			return init();
+			return init(arg2);
 		String a = arg.checkjstring();
 		String s = null;
 		switch (opcode) { 

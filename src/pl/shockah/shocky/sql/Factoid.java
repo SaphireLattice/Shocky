@@ -12,18 +12,20 @@ import org.pircbotx.User;
 
 import pl.shockah.shocky.interfaces.IFactoidRegistry;
 
+import static javax.swing.UIManager.put;
+
 public final class Factoid {
-	public static JSONObject toJSONObject(Factoid f) {
+	public JSONObject toJSONObject() {
 		try {
 			JSONObject fjobject = new JSONObject();
-			fjobject.put("id", f.id)
-					.put("factoid", f.name)
-					.put("channel", f.channel)
-					.put("author", f.author)
-					.put("rawtext", f.rawtext)
-					.put("stamp", f.stamp / 1000)
-					.put("locked", f.locked)
-					.put("forgotten", f.forgotten);
+			fjobject.put("id", this.id)
+					.put("factoid", this.name)
+					.put("channel", this.channel)
+					.put("author", this.author)
+					.put("rawtext", this.rawtext)
+					.put("stamp", this.stamp / 1000)
+					.put("locked", this.locked)
+					.put("forgotten", this.forgotten);
 
 			return fjobject;
 		} catch (Exception e) {
@@ -69,11 +71,11 @@ public final class Factoid {
 	public Token[] tokens = null;
 	public IFactoidRegistry registry = null;
 
-	private Factoid(long id, String name, String channel, String author, String rawtext, long stamp) {
+	public Factoid(long id, String name, String channel, String author, String rawtext, long stamp) {
 		this(id, name, channel, author, rawtext, stamp, false, false);
 	}
 
-	private Factoid(long id, String name, String channel, String author, String rawtext, long stamp, boolean locked, boolean forgotten) {
+	public Factoid(long id, String name, String channel, String author, String rawtext, long stamp, boolean locked, boolean forgotten) {
 		this.id = id;
 		this.name = name;
 		this.channel = channel;

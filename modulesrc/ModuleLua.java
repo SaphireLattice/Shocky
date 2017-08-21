@@ -8,7 +8,6 @@ import org.luaj.vm2.compiler.*;
 import org.luaj.vm2.lib.*;
 import org.luaj.vm2.lib.jse.*;
 import org.pircbotx.Channel;
-import org.pircbotx.PircBotX;
 import org.pircbotx.ShockyBot;
 import org.pircbotx.User;
 
@@ -30,18 +29,18 @@ import pl.shockah.shocky.threads.*;
 
 public class ModuleLua extends ScriptModule implements ResourceFinder {
 
-	public static final File binary = new File(Data.lastSave, "luastate.bin").getAbsoluteFile();
-	public static final File scripts = new File("data", "lua").getAbsoluteFile();
-	public static final String luaHash = "lua";
-	public static final String cmdFuncHash = "cmdfunc";
-	public static final String channelHash = "luachannel";
+    private static final File binary = new File(Data.lastSave, "luastate.bin").getAbsoluteFile();
+    private static final File scripts = new File("data", "lua").getAbsoluteFile();
+    private static final String luaHash = "lua";
+    private static final String cmdFuncHash = "cmdfunc";
+    private static final String channelHash = "luachannel";
 
-	protected Command cmd, reset;
+	private Command cmd, reset;
 	private final SandboxThreadGroup sandboxGroup = new SandboxThreadGroup("lua");
 	private final ThreadFactory sandboxFactory = new SandboxThreadFactory(sandboxGroup);
 
-	LuaTable env = null;
-	LuaValue envMeta = null;
+	private Globals globals = null;
+    private LuaValue envMeta = null;
 
 	@Override
 	public String name() {
@@ -70,10 +69,10 @@ public class ModuleLua extends ScriptModule implements ResourceFinder {
 
 	@Override
 	public void onDataSave(File dir) {
-		if (env == null)
+		if (globals == null)
 			return;
 		File file = new File(dir, "luastate.bin");
-		LuaValue value = env.get("irc");
+		LuaValue value = globals.get("irc");
 		if (!value.istable())
 			return;
 		
@@ -103,29 +102,32 @@ public class ModuleLua extends ScriptModule implements ResourceFinder {
 	}
 
 	private void initLua() {
-		BaseLib.FINDER = this;
-		env = new LuaTable();
-		env.load(new JseBaseLib());
-		env.load(new PackageLib());
-		env.load(new TableLib());
-		env.load(new StringLib());
-		env.load(new JseMathLib());
-		env.load(new JseOsLib());
+	    globals = new Globals();
 
-		env.load(new BotLib());
-		env.load(new JSONLib());
-		env.load(new BitLib());
-		
-		env.rawset("print", LuaValue.NIL);
-		env.rawset("pcall", LuaValue.NIL);
-		env.rawset("xpcall", LuaValue.NIL);
-		env.rawset("sleep", new SleepFunction());
+	    globals.finder = this;
+        globals.load(new JseBaseLib());
+        globals.load(new PackageLib());
+        globals.load(new TableLib());
+        globals.load(new Bit32Lib());
+        globals.load(new StringLib());
+        //globals.load(new CoroutineLib());
+        globals.load(new JseMathLib());
+        globals.load(new JseOsLib());
 
-		env.rawset("cmd", new CmdData());
+        globals.load(new BotLib());
+        globals.load(new NetLib());
+        //globals.load(new BitLib());
+
+        globals.rawset("print", LuaValue.NIL);
+        globals.rawset("pcall", LuaValue.NIL);
+        globals.rawset("xpcall", LuaValue.NIL);
+        globals.rawset("sleep", new SleepFunction());
+
+        globals.rawset("cmd", new CmdData());
 		
 		for (Module module : Module.getModules()) {
 			if (module instanceof ILua)
-				((ILua)module).setupLua(env);
+				((ILua)module).setupLua(globals);
 		}
 		
 		LuaBoolean.s_metatable = LuaImmutableTable.immutableOf(LuaBoolean.s_metatable);
@@ -147,23 +149,22 @@ public class ModuleLua extends ScriptModule implements ResourceFinder {
 				is = new DataInputStream(new FileInputStream(binary));
 				table = readValue(is);
 			}
+
+            if (is != null)
+                is.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			env.rawset("irc", table);
-			try {
-			if (is != null)
-				is.close();
-			} catch (IOException e) {}
+			globals.rawset("irc", table);
 		}
 
-		LuaThread.setGlobals(env);
-		LuaC.install();
+        LoadState.install(globals);
+        LuaC.install(globals);
 
-		BaseLib.instance.STDIN = new ZeroInputStream();
+		globals.STDIN = new ZeroInputStream();
 
 		envMeta = new LuaTable();
-		envMeta.rawset(LuaValue.INDEX, env);
+		envMeta.rawset(LuaValue.INDEX, globals);
 		envMeta = LuaImmutableTable.immutableOf(envMeta);
 	}
 
@@ -267,7 +268,7 @@ public class ModuleLua extends ScriptModule implements ResourceFinder {
 			return LuaValue.valueOf(new String(bytes, Helper.utf8));
 
 		case LuaValue.TFUNCTION:
-			return LoadState.load(is, "script", env);
+            return new LuaClosure(LoadState.undump(is, "script"), globals);
 
 		default:
 		case LuaValue.TNIL:
@@ -344,21 +345,21 @@ public class ModuleLua extends ScriptModule implements ResourceFinder {
 		for (Map.Entry<String,Object> pair : params.entrySet())
 			subTable.rawset(pair.getKey(),valueOf(pair.getValue()));
 
-		LuaClosure func = null;
+		Prototype prototype = null;
 		Object obj = state.get(luaHash, code);
-		if (obj instanceof LuaClosure) {
-			func = (LuaClosure) obj;
-			func.setfenv(subTable);
+		if (obj instanceof Prototype) {
+			prototype = (Prototype) obj;
 		}
 
 		final ExecutorService service = Executors.newSingleThreadExecutor(sandboxFactory);
 		Print print = null;
 		try {
-			if (func == null) {
-				func = LuaC.instance.load(new ByteArrayInputStream(code.getBytes(Helper.utf8)), "script", subTable).checkclosure();
-				state.put(luaHash, code, func);
+			if (prototype == null) {
+                prototype = globals.loadPrototype(new ByteArrayInputStream(code.getBytes(Helper.utf8)), "script", "t");
+				state.put(luaHash, code, prototype);
 			}
-			LuaRunner r = new LuaRunner(func,state);
+			LuaClosure func = new LuaClosure(prototype, subTable).checkclosure();
+			LuaRunner r = new LuaRunner(func, state, subTable);
 			print = r.printer;
 			Future<String> f = service.submit(r);
 			output = f.get(30, TimeUnit.SECONDS);
@@ -412,13 +413,13 @@ public class ModuleLua extends ScriptModule implements ResourceFinder {
 
 		private final LuaClosure func;
 		private final LuaState state;
-		public final Print printer;
+		private final Print printer;
 
-		public LuaRunner(LuaClosure f, LuaState s) {
+		public LuaRunner(LuaClosure f, LuaState s, LuaValue env) {
 			func = f;
 			state = s;
-			printer = new Print(f.getfenv());
-			f.getfenv().rawset("print", printer);
+			printer = new Print(env);
+			env.rawset("print", printer);
 		}
 
 		@Override
@@ -549,14 +550,14 @@ public class ModuleLua extends ScriptModule implements ResourceFinder {
 			String args = arg.optjstring("");
 			Parameters params = new Parameters(state.bot, EType.Channel, state.chan, state.user, args);
 			CommandCallback callback = new CommandCallback();
-			//try {
+			try {
 				cmd.doCommand(params, callback);
 				if (callback.type != EType.Channel)
 					return NIL;
 				return valueOf(callback.output.toString());
-			/*} catch (Exception e) {
+			} catch (Exception e) {
 				throw new LuaError(e);
-			}*/
+			}
 		}
 	}
 

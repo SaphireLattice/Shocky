@@ -35,7 +35,7 @@ public class ModuleYoutube extends Module implements IAcceptURLs {
 	
 	public static CharSequence getVideoInfo(User user, String vID) {
 		HTTPQuery q;
-		String key = Data.config.getString("youtube-key");
+		String key = Data.config.getString("google-key");
 		if (key.isEmpty())
 			return null;
 		try {
@@ -86,7 +86,7 @@ public class ModuleYoutube extends Module implements IAcceptURLs {
 	}
 	public static CharSequence getVideoSearch(User user, String query, boolean data, boolean url) {
 		HTTPQuery q;
-		String key = Data.config.getString("youtube-key");
+		String key = Data.config.getString("google-key");
 		if (key.isEmpty())
 			return null;
 		try {
@@ -133,8 +133,8 @@ public class ModuleYoutube extends Module implements IAcceptURLs {
 	public boolean isListener() {return true;}
 	public void onEnable(File dir) {
 		Data.config.setNotExists("yt-otherbot",false);
-		Data.config.setNotExists("youtube-key","");
-		Data.protectedKeys.add("youtube-key");
+		Data.config.setNotExists("google-key","");
+		Data.protectedKeys.add("google-key");
 		
 		Command.addCommands(this, cmd = new CmdYoutube());
 		Command.addCommand(this, "yt", cmd);

@@ -285,7 +285,7 @@ public class ModuleRegexReplace extends Module {
 				current = iter.next();
 				current.init(sb);
 				if (useLine) {
-					line = module.getRollbackLine(this, LineWithUsers.class, channel, user, null, message, true, 10, 0);
+					line = module.getRollbackLine(this, LineWithUsers.class, channel, user, null, message, true, 10, 0, -1);
 					if (line == null)
 						return null;
 					if (current.run(true, sb))

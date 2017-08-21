@@ -16,8 +16,8 @@ public class SandboxSecurityManager extends SecurityManager
 	private final String[] libs = new String[] {
 			"./libs/commons-lang3-3.1.jar",
 			"./libs/LOLCODE-0.11.jar",
-			"./libs/luaj-jse-2.0.2.jar",
-			"./libs/pircbotx-1.8.jar",
+			"./libs/luaj-jse-3.0.1.jar",
+			"./libs/pircbotx-1.9.jar",
 	};
 	
 	private final File phpData = new File("data", "php").getAbsoluteFile();

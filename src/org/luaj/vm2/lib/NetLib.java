@@ -17,7 +17,7 @@ import pl.shockah.HTTPQuery;
 import pl.shockah.HTTPQuery.Method;
 import pl.shockah.StringTools;
 
-public class JSONLib extends VarArgFunction {
+public class NetLib extends VarArgFunction {
 	
 	static {
 		try {
@@ -29,11 +29,12 @@ public class JSONLib extends VarArgFunction {
 		}
 	}
 
-	public LuaValue init() {
+	private LuaValue init(Varargs args) {
+	    LuaValue env = args.arg(2);
 		LuaTable t = new LuaTable();
-		bind(t, JSONLib.class, new String[] {"json","get","url","irc"}, 1);
+		bind(t, NetLib.class, new String[] {"json","get","url","irc"}, 1);
 		env.set("net", t);
-		PackageLib.instance.LOADED.set("net", t);
+        env.get("package").get("loaded").set("net", t);
 		return t;
 	}
 
@@ -41,11 +42,11 @@ public class JSONLib extends VarArgFunction {
 	public Varargs invoke(Varargs args) {
 		switch (opcode) {
 		case 0:
-			return init();
+			return init(args);
 		case 1:
-			return JSONLib.json(args);
+			return NetLib.json(args);
 		case 2:
-			return JSONLib.get(args);
+			return NetLib.get(args);
 		case 3:
 			try {
 				return valueOf(URLEncoder.encode(args.checkjstring(1), "UTF8"));

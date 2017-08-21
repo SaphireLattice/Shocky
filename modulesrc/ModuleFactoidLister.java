@@ -57,9 +57,9 @@ public class ModuleFactoidLister extends Module {
             }
             String param = params.nextParam();
             if (param.equals("reload")) {
-                handler.contentCache = null;
+                handler.content = null;
                 try {
-                    handler.contentCache = handler.getFactoids();
+                    handler.getFactoids();
                     callback.type = EType.Notice;
                     callback.append("Done!");
                     return;
@@ -76,101 +76,65 @@ public class ModuleFactoidLister extends Module {
 
         String timeFormat = "yyyy-MM-dd HH:mm:ss";
         SimpleDateFormat dateFormat = new SimpleDateFormat(timeFormat);
-        String contentCache;
+        String content;
+
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
-            Headers headers = httpExchange.getResponseHeaders();
-            headers.add("Content-Type", "text/plain; charset=utf-8");
-            headers.add("Cache-Control", "private; max-age=90");
-
-            byte[] buffer;
-
-            if (contentCache == null) {
-                buffer = "No factoids data available yet.".getBytes(StandardCharsets.UTF_8);
-                httpExchange.sendResponseHeaders(404, buffer.length);
-                try (OutputStream os = httpExchange.getResponseBody()) {
-                    os.write(buffer, 0, buffer.length);
-                }
-                return;
-            }
-
-            httpExchange.sendResponseHeaders(200, contentCache.length());
-            try (OutputStream os = httpExchange.getResponseBody();
-                 InputStream is = new ByteArrayInputStream(contentCache.getBytes(StandardCharsets.UTF_8))) {
-                buffer = new byte[1024];
-                int count;
-                while ((count = is.read(buffer, 0, buffer.length)) > 0)
-                    os.write(buffer, 0, count);
-            }
-        }
-
-        private Integer getMaxLength(Factoid[] factoids, Field field) {
-            System.out.println("Getting a length of field " + field.getName());
-            int max = -1;
-            for (Factoid factoid : factoids) {
-                try {
-                    String str = (String) field.get(factoid);
-                    if (str == null)
-                        continue;
-                    if (str.length() > max)
-                        max = str.length();
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            return max;
-        }
-
-
-        private String padForColumn(String s, int padding) {
-            return s + "     ";//String.format("%1$-" + (padding - s.length()) + "s", s);
-        }
-
-        private String getFactoid(Factoid factoid) {
-            String sb = padForColumn(factoid.name, lengths.get("name") + 5) +
-                    padForColumn(factoid.author, lengths.get("author") + 5) +
-                    padForColumn(dateFormat.format(new Date(factoid.stamp)), timeFormat.length() + 5) +
-                    padForColumn(factoid.forgotten ? "Yes" : "No", 9 + 5) +
-                    padForColumn(factoid.rawtext, lengths.get("rawtext"));
-            return sb;
-        }
-
-        private String getFactoids() {
-            StringBuilder sb = new StringBuilder();
-            IFactoid f;
             try {
-                f = (IFactoid) Module.getModule("factoid");
+                Headers headers = httpExchange.getResponseHeaders();
+                headers.add("Content-Type", "text/plain; charset=utf-8");
+                headers.add("Cache-Control", "private; max-age=90");
+
+                byte[] buffer;
+
+                if (content == null) {
+                    buffer = "{\"error\": \"no factoids data available yet\"}".getBytes(StandardCharsets.UTF_8);
+                    httpExchange.sendResponseHeaders(404, buffer.length);
+                    try (OutputStream os = httpExchange.getResponseBody()) {
+                        os.write(buffer, 0, buffer.length);
+                    }
+                    return;
+                }
+
+                httpExchange.sendResponseHeaders(200, 0);
+                try (BufferedOutputStream os = new BufferedOutputStream(httpExchange.getResponseBody()); InputStream is = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8))) {
+                    buffer = new byte[1024];
+                    int count;
+                    while ((count = is.read(buffer, 0, buffer.length)) > 0)
+                        os.write(buffer, 0, count);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
-                return null;
+                throw e;
             }
-            if (f != null) {
-                Factoid[] factoids = f.getFactoids();
-                HashMap<String, Integer> lengths = new HashMap<>();
+        }
 
-                for (Field field : Factoid.class.getFields()) {
-                    if (field.getType().getSimpleName().equals("String")) {
-                        lengths.put(field.getName(), getMaxLength(factoids, field));
+        private void getFactoids() {
+            try {
+                StringBuilder sb = new StringBuilder();
+                IFactoid f = null;
+                try {
+                    f = (IFactoid) Module.getModule("factoid");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                if (f != null) {
+                    if (content == null)
+                        content = "[";
+                    Factoid[] factoids = f.getFactoids();
+                    for (int i = 0, factoidsLength = factoids.length; i < factoidsLength; i++) {
+                        Factoid factoid = factoids[i];
+                        content += factoid.toJSONObject().toString();
+                        if (i != factoidsLength - 1)
+                            content += ",";
                     }
+                    content += "]";
+                } else {
+                    content = "{\"error\": \"unable to connect get factoids\"}";
                 }
-
-                sb.append(padForColumn("Name", lengths.get("name") + 5))
-                  .append(padForColumn("Author", lengths.get("author") + 5))
-                  .append(padForColumn("Time", timeFormat.length() + 5))
-                  .append(padForColumn("Forgotten", 9+5))
-                  .append(padForColumn("Raw Source", lengths.get("rawtext")))
-                  .append("\n");
-
-                for (Factoid factoid : factoids) {
-                    sb.append(getFactoid(factoid, lengths)).append("\n");
-                }
-
-            } else {
-                sb.append("Unable to connect to database.");
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-
-            return sb.toString();
         }
     }
 }

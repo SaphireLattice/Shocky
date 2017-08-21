@@ -211,7 +211,7 @@ public class ModuleNLP extends Module implements ILua {
 		}
 
 		public LuaValue asTable(String sentence, float chance, LuaTable table) {
-			String[][] replacements = new String[table.getn().toint()][];
+			String[][] replacements = new String[table.length()][];
 			LuaValue v;
 			for ( int i=0; !(v = table.rawget(++i)).isnil(); ) {
 				LuaTable t = v.checktable();

@@ -5,8 +5,7 @@ public class LuaImmutableTable extends LuaTable {
 	private LuaImmutableTable(LuaTable table) {
 		this.array = table.array;
 		this.hashEntries = table.hashEntries;
-		this.hashKeys = table.hashKeys;
-		this.hashValues = table.hashValues;
+		this.hash = table.hash;
 		this.m_metatable = table.m_metatable;
 	}
 	
@@ -71,11 +70,6 @@ public class LuaImmutableTable extends LuaTable {
 
 	@Override
 	public void hashset(LuaValue key, LuaValue value) {
-		error();
-	}
-
-	@Override
-	protected void hashClearSlot(int i) {
 		error();
 	}
 

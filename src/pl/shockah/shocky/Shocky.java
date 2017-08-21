@@ -5,6 +5,8 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.*;
 
+import jdk.nashorn.api.scripting.JSObject;
+import org.json.JSONArray;
 import org.pircbotx.*;
 import org.pircbotx.hooks.events.*;
 
@@ -30,7 +32,6 @@ public class Shocky extends ListenerAdapter {
 		System.setProperty("http.keepAlive", "false");
 		Data.load();
 		SQL.init();
-
 
         multiBot = new ShockyMultiBotManager(Data.config.getString("main-botname"));
         try {

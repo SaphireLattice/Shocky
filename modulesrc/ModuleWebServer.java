@@ -25,11 +25,11 @@ import com.sun.net.httpserver.HttpServer;
 
 public class ModuleWebServer extends Module implements IWebServer {
     private static HashMap<String,HttpContext> contexts = new HashMap<>();
-	private static HttpServer server;
-	private Command cmd;
-	private static final String mname = "webserver";
-	private static final String hostname = "localhost";
-    private String baseURL = "https://reynir.aww.moe/shocky";
+    private static HttpServer server;
+    private Command cmd;
+    private static final String mname = "webserver";
+    private static final String hostname = "nikky.moe";
+    private String baseURL = "http://nikky.moe:8000";
 	
 	@Override
 	public String name() {

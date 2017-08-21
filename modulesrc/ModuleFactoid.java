@@ -677,7 +677,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 								}
 							}
 						}
-						List<LineMessage> lines = module.getRollbackLines(LineMessage.class, channel.getName(), user != null ? user.getNick() : null, null, message, true, 1, 0);
+						List<LineMessage> lines = module.getRollbackLines(LineMessage.class, channel.getName(), user != null ? user.getNick() : null, null, message, true, 1, 0, -1);
 						if (lines.size() == 1) {
 							StringBuilder msg = new StringBuilder(factoid);
 							msg.append(' ');
@@ -1182,7 +1182,7 @@ public class ModuleFactoid extends Module implements IFactoid, ILua {
 				return;
 			}
 
-			String name = params.nextParam();
+			String name = params.nextParam().toLowerCase();
 			boolean local = false;
 			if (name.equals(".")) {
 				if (params.tokenCount < 3)

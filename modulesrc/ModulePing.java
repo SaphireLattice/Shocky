@@ -38,12 +38,14 @@ public class ModulePing extends Module {
         try {
             System.out.println("[ModulePing] inside of try/catch");
             Long eventTimestamp = event.getTimestamp();
-            pingValueString = event.getMessage().substring(String.valueOf(eventTimestamp).length()+7,event.getMessage().length()-1);
+            pingValueString = event.getMessage().substring(String.valueOf(eventTimestamp).length() + 7, event.getMessage().length() - 1);
+            if (!ModulePing.isNumeric(pingValueString))
+                return;
             pingValue = Long.parseLong(pingValueString);
 
-            if (pings.containsKey(pingValue)); {
+            if (pings.containsKey(pingValue)) {
                 System.out.println("[ModulePing] ping exists in 'HashMap pings'");
-                Ping ping = pings.get(pingValue);
+                Ping ping = pings.remove(pingValue);
                 if (!ping.bot.equals(event.getBot())) {
                     return;
                 }
@@ -63,9 +65,18 @@ public class ModulePing extends Module {
         }
         catch (Exception e) {
             e.printStackTrace();
-            System.out.println("[ModulePing] recieved non-ping notice, substring result: " + pingValueString);
         }
     }
+
+    private static boolean isNumeric(String str) {
+        for (char c : str.toCharArray())
+        {
+            if (!Character.isDigit(c)) return false;
+        }
+        return true;
+    }
+
+
     public class CmdPing extends Command {
         public String command() {return "ping";}
         public String help(Parameters params) {
@@ -91,7 +102,7 @@ public class ModulePing extends Module {
             }
             long timestamp = System.currentTimeMillis();
             Ping ping = new Ping(params.bot, target, params.sender, channel, timestamp, timestamp % 1000);
-            params.bot.sendCTCPCommand(target,ping.toString());
+            params.bot.sendCTCPCommand(target, ping.toString());
             pings.put(timestamp % 1000, ping);
         }
     }

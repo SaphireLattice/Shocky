@@ -43,8 +43,14 @@ public class QuerySelect extends Query {
 		String clauseColumns = getColumnsClause(columns);
 		String clauseWhere = getWhereClause(criterions);
 		String clauseOrderBy = getOrderByClause(orderby);
-		String clauseLimit = limitOffset == 0 && limitCount == -1 ? "" : "LIMIT "+(limitOffset != 0 ? ""+limitOffset+"," : "")+limitCount;
-		return "SELECT "+clauseColumns+" FROM "+table+(clauseWhere.isEmpty() ? "" : " "+clauseWhere)+(clauseOrderBy.isEmpty() ? "" : " "+clauseOrderBy)+(clauseLimit.isEmpty() ? "" : " "+clauseLimit);
+		String clauseLimit = (limitOffset == 0 && limitCount == -1) ? "" : "LIMIT "+(limitOffset != 0 ? ""+limitOffset+"," : "")+limitCount;
+		return "SELECT "+
+				clauseColumns+
+				" FROM "+
+				table+
+				(clauseWhere.isEmpty() ? "" : " "+clauseWhere)+
+				(clauseOrderBy.isEmpty() ? "" : " "+clauseOrderBy)+
+				(clauseLimit.isEmpty() ? "" : " "+clauseLimit);
 	}
 	
 	public PreparedStatement getSQLQuery(Connection con) {

@@ -19,6 +19,7 @@ public abstract class Query {
 		
 		return sb.toString();
 	}
+
 	@Deprecated
 	protected static String getValuesPairClause(Map<String,Object> list) {
 		return getValuesPairClause(list, false);

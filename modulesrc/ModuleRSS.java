@@ -76,7 +76,7 @@ public class ModuleRSS extends Module {
 					}
 					feeds.add(new Feed(url,interval,date,channels));
 				} catch (MalformedURLException e) {
-					continue;
+					e.printStackTrace();
 				}
 			}
 		}

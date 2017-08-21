@@ -2,10 +2,10 @@ package pl.shockah.shocky.cmds;
 
 import pl.shockah.shocky.Shocky;
 
-public class CmdDie extends Command {
-	public String command() {return "die";}
+public class CmdShutdown extends Command {
+	public String command() {return "shutdown";}
 	public String help(Parameters params) {
-		return "[r:controller] die - shutdowns the bot";
+		return "[r:controller] shutdown - shutdowns the bot";
 	}
 	
 	public void doCommand(Parameters params, CommandCallback callback) {
